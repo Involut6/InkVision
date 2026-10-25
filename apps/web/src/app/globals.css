@@ -1,0 +1,495 @@
+@import 'tailwindcss';
+
+/* ==========================================================================
+   InkVision Creatives — design tokens
+   ==========================================================================
+   The palette is the established brand system: royal blue as the primary,
+   gold as a restrained accent, warm white and off-white editorial surfaces,
+   charcoal and deep navy for type.
+
+   No brand asset files were supplied with the brief, so the exact hex values
+   below are cohesive provisional choices. They are centralised here precisely
+   so they can be replaced with the authoritative values in one edit — see
+   README → "Outstanding business decisions".
+
+   Gold is deliberately scarce: fine rules, small marks, selected emphasis and
+   meaningful calls to action. It is never a large field.
+   ========================================================================== */
+
+@theme {
+  /* --- Royal blue: the primary brand colour ----------------------------- */
+  --color-royal-50: #eef2fb;
+  --color-royal-100: #d8e1f6;
+  --color-royal-200: #b4c5ec;
+  --color-royal-300: #8aa3df;
+  --color-royal-400: #5f7ccd;
+  --color-royal-500: #3d59b5;
+  --color-royal-600: #2a3f94;
+  --color-royal-700: #1f2f72;
+  --color-royal-800: #18244f;
+  --color-royal-900: #121b3a;
+  --color-royal-950: #0b1026;
+
+  /* --- Gold: accent only ------------------------------------------------ */
+  --color-gold-100: #f8efd8;
+  --color-gold-200: #efdcad;
+  --color-gold-300: #e3c67d;
+  --color-gold-400: #d4ab4c;
+  --color-gold-500: #bd8f2b;
+  --color-gold-600: #9c7320;
+  --color-gold-700: #78571a;
+
+  /* --- Editorial surfaces ----------------------------------------------- */
+  --color-paper: #fdfcf9;
+  --color-paper-warm: #f8f5ef;
+  --color-paper-dim: #f1ece3;
+
+  /* --- Typography colours ----------------------------------------------- */
+  --color-ink-900: #15171c;
+  --color-ink-800: #24272f;
+  --color-ink-700: #353942;
+  --color-ink-600: #4c515c;
+  /* 4.68:1 on the dimmest editorial surface. The previous #6b7280 cleared
+     4.5:1 on white but fell to 4.11:1 on --color-paper-dim, which is where
+     muted metadata actually sits. */
+  --color-ink-500: #646973;
+  --color-ink-400: #8d93a0;
+  --color-ink-300: #b6bac3;
+  --color-ink-200: #d9dce2;
+  --color-ink-100: #ebedf1;
+
+  /* --- Semantic aliases: components reference these, not the ramps ------ */
+  --color-surface: var(--color-paper);
+  --color-surface-raised: #ffffff;
+  --color-surface-sunken: var(--color-paper-warm);
+  --color-surface-inverse: var(--color-royal-950);
+
+  --color-content-primary: var(--color-ink-900);
+  --color-content-secondary: var(--color-ink-600);
+  --color-content-muted: var(--color-ink-500);
+  --color-content-inverse: var(--color-paper);
+
+  --color-brand: var(--color-royal-700);
+  --color-brand-strong: var(--color-royal-800);
+  --color-brand-soft: var(--color-royal-50);
+  --color-accent: var(--color-gold-500);
+  --color-accent-soft: var(--color-gold-100);
+
+  --color-border-subtle: var(--color-ink-200);
+  --color-border-strong: var(--color-ink-300);
+  --color-border-accent: var(--color-gold-300);
+  /* Gold as a TEXT colour needs to be darker than gold as a rule or a mark.
+     --color-accent (gold-500) is 2.5:1 on paper — fine for a 2px rule, which
+     is decorative, and a WCAG failure for a word. Anything that sets gold on
+     type uses this instead. */
+  --color-accent-text: var(--color-gold-700);
+
+  --color-success: #1f6f4a;
+  --color-success-soft: #e7f3ec;
+  --color-warning: #8a5a12;
+  --color-warning-soft: #fdf3e0;
+  --color-danger: #9b2235;
+  --color-danger-soft: #fbeaec;
+  --color-info: var(--color-royal-600);
+  --color-info-soft: var(--color-royal-50);
+
+  /* --- Type families ----------------------------------------------------
+     A refined serif for headlines, a highly legible sans for everything
+     functional. Loaded via next/font in the root layout, which supplies the
+     CSS variables referenced here.
+     ------------------------------------------------------------------- */
+  --font-serif:
+    var(--font-fraunces), 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia,
+    'Times New Roman', serif;
+  --font-sans:
+    var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* --- Restrained editorial type scale ---------------------------------- */
+  --text-eyebrow: 0.75rem;
+  --text-eyebrow--line-height: 1.2;
+  --text-eyebrow--letter-spacing: 0.14em;
+  --text-eyebrow--font-weight: 600;
+
+  --text-display: clamp(2.6rem, 6.2vw, 4.75rem);
+  --text-display--line-height: 1.03;
+  --text-display--letter-spacing: -0.025em;
+
+  --text-h1: clamp(2.1rem, 4.6vw, 3.4rem);
+  --text-h1--line-height: 1.08;
+  --text-h1--letter-spacing: -0.02em;
+
+  --text-h2: clamp(1.6rem, 3vw, 2.35rem);
+  --text-h2--line-height: 1.16;
+  --text-h2--letter-spacing: -0.015em;
+
+  --text-h3: clamp(1.25rem, 2vw, 1.6rem);
+  --text-h3--line-height: 1.25;
+  --text-h3--letter-spacing: -0.01em;
+
+  --text-lead: clamp(1.1rem, 1.5vw, 1.3rem);
+  --text-lead--line-height: 1.6;
+
+  --text-meta: 0.8125rem;
+  --text-meta--line-height: 1.45;
+
+  /* --- Measure: readable line lengths ----------------------------------- */
+  --container-measure: 38rem;
+  --container-measure-wide: 48rem;
+  --container-page: 76rem;
+
+  /* --- Elevation: restrained, never dashboard-like ---------------------- */
+  --shadow-card: 0 1px 2px rgb(21 23 28 / 0.04), 0 8px 24px -12px rgb(21 23 28 / 0.08);
+  --shadow-raised: 0 2px 4px rgb(21 23 28 / 0.05), 0 18px 40px -16px rgb(21 23 28 / 0.12);
+
+  --radius-card: 2px;
+  --radius-control: 2px;
+
+  --ease-editorial: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* ==========================================================================
+   Base layer
+   ========================================================================== */
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    border-color: var(--color-border-subtle);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+    /* Fixed header offset for in-page anchors. */
+    scroll-padding-top: 6rem;
+  }
+
+  body {
+    background-color: var(--color-surface);
+    color: var(--color-content-primary);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings:
+      'kern' 1,
+      'liga' 1;
+    /* Nothing in the design scrolls horizontally. */
+    overflow-x: hidden;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* A visible, high-contrast focus ring on every interactive element.
+     Never removed — it is the only way a keyboard user knows where they are. */
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 3px;
+    border-radius: 1px;
+  }
+
+  /* Respect a reduced-motion preference by removing motion, not just damping
+     it. Opacity changes are retained because they convey state. */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Honour a forced-colours mode rather than fighting it. */
+  @media (forced-colors: active) {
+    .fine-rule,
+    .gold-rule {
+      border-color: CanvasText;
+    }
+  }
+
+  ::selection {
+    background-color: var(--color-royal-100);
+    color: var(--color-royal-900);
+  }
+
+  /* Tabular figures wherever numbers are compared in a column. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ==========================================================================
+   Component utilities
+   ========================================================================== */
+
+@layer components {
+  /* The page gutter. 16px at phone width, widening with the viewport. */
+  .page-shell {
+    width: 100%;
+    max-width: var(--container-page);
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+
+  @media (min-width: 40rem) {
+    .page-shell {
+      padding-inline: 2rem;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .page-shell {
+      padding-inline: 3rem;
+    }
+  }
+
+  /* The scarce gold accent: a fine rule, used to mark a section opening. */
+  .gold-rule {
+    display: block;
+    width: 2.5rem;
+    height: 0;
+    border-top: 2px solid var(--color-accent);
+  }
+
+  .fine-rule {
+    border-top: 1px solid var(--color-border-subtle);
+  }
+
+  /* Long-form editorial body copy rendered from sanitised CMS HTML. */
+  .prose-editorial {
+    max-width: var(--container-measure-wide);
+    font-size: 1.0625rem;
+    line-height: 1.75;
+    color: var(--color-content-secondary);
+  }
+
+  .prose-editorial > * + * {
+    margin-top: 1.25em;
+  }
+
+  .prose-editorial h2 {
+    margin-top: 2.5em;
+    font-size: var(--text-h3);
+    line-height: 1.25;
+    color: var(--color-content-primary);
+  }
+
+  .prose-editorial h3 {
+    margin-top: 2em;
+    font-family: var(--font-sans);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--color-content-primary);
+  }
+
+  .prose-editorial strong {
+    font-weight: 600;
+    color: var(--color-content-primary);
+  }
+
+  .prose-editorial a {
+    color: var(--color-brand);
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+  }
+
+  .prose-editorial a:hover {
+    color: var(--color-brand-strong);
+    text-decoration-thickness: 2px;
+  }
+
+  .prose-editorial ul,
+  .prose-editorial ol {
+    padding-inline-start: 1.25rem;
+  }
+
+  .prose-editorial ul {
+    list-style-type: none;
+  }
+
+  .prose-editorial ul > li {
+    position: relative;
+    padding-inline-start: 0.5rem;
+  }
+
+  .prose-editorial ul > li::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: -0.75rem;
+    inset-block-start: 0.7em;
+    width: 0.3rem;
+    height: 0;
+    border-top: 1px solid var(--color-accent);
+  }
+
+  .prose-editorial ol {
+    list-style-type: decimal;
+  }
+
+  .prose-editorial li + li {
+    margin-top: 0.5em;
+  }
+
+  .prose-editorial blockquote {
+    margin-inline-start: 0;
+    padding-inline-start: 1.25rem;
+    border-inline-start: 2px solid var(--color-border-accent);
+    font-family: var(--font-serif);
+    font-size: 1.1875rem;
+    line-height: 1.55;
+    color: var(--color-content-primary);
+  }
+
+  .prose-editorial figure img,
+  .prose-editorial > img {
+    width: 100%;
+    height: auto;
+  }
+
+  .prose-editorial figcaption {
+    margin-top: 0.5rem;
+    font-size: var(--text-meta);
+    color: var(--color-content-muted);
+  }
+
+  .prose-editorial hr {
+    margin-block: 2.5em;
+    border: 0;
+    border-top: 1px solid var(--color-border-subtle);
+  }
+
+  .prose-editorial table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+  }
+
+  .prose-editorial th,
+  .prose-editorial td {
+    padding: 0.625rem 0.75rem;
+    border-bottom: 1px solid var(--color-border-subtle);
+    text-align: start;
+  }
+
+  .prose-editorial th {
+    font-family: var(--font-sans);
+    font-size: var(--text-meta);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-content-muted);
+  }
+
+  /* Skip link: off-screen until focused. */
+  .skip-link {
+    position: absolute;
+    inset-inline-start: 1rem;
+    inset-block-start: -4rem;
+    z-index: 100;
+    padding: 0.75rem 1.25rem;
+    background-color: var(--color-surface-inverse);
+    color: var(--color-content-inverse);
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: inset-block-start 150ms var(--ease-editorial);
+  }
+
+  .skip-link:focus {
+    inset-block-start: 1rem;
+  }
+}
+
+/* ==========================================================================
+   Motion
+   ==========================================================================
+   Only two animations exist in the system, both tied to a disclosure: the
+   accordion's height transition and the mobile panel's fade. Both are removed
+   entirely under `prefers-reduced-motion`, handled in the base layer above.
+   ========================================================================== */
+
+@keyframes accordion-down {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+    opacity: 1;
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@utility animate-accordion-down {
+  animation: accordion-down 260ms var(--ease-editorial);
+}
+
+@utility animate-accordion-up {
+  animation: accordion-up 200ms var(--ease-editorial);
+}
+
+@utility animate-in {
+  animation: fade-in 200ms var(--ease-editorial);
+}
+
+@utility animate-out {
+  animation: fade-out 160ms var(--ease-editorial);
+}
+
+@utility fade-in {
+  animation-name: fade-in;
+}
+
+@utility fade-out {
+  animation-name: fade-out;
+}

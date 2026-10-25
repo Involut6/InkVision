@@ -1,0 +1,1011 @@
+// InkVision Creatives — PostgreSQL schema.
+//
+// Ownership: the schema lives with the API (`apps/api`), which is the only
+// process that talks to the database. The website reaches data exclusively
+// through the REST API, so there is exactly one Prisma schema in the repo.
+//
+// Conventions used throughout:
+//   * Money is stored as an integer count of minor units (`*AmountMinor`)
+//     alongside an ISO-4217 `currency` column. No floating point currency.
+//   * All timestamps are `timestamptz` (Prisma `DateTime` on PostgreSQL) and
+//     stored in UTC; formatting for a display timezone is a presentation concern.
+//   * Public content is addressed by a unique `slug`.
+//   * Long-form copy is stored twice: sanitised HTML (`*Html`) for rendering and
+//     a plain-text rendition (`*Text`) for excerpts, search and reading time.
+
+// Prisma 7 generator. The generated client is committed-ignored and lives
+// beside the source so the NestJS build can resolve it without path mapping.
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+  runtime  = "nodejs"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// =============================================================================
+// Enums
+// =============================================================================
+
+enum AdminRole {
+  OWNER
+  ADMIN
+  EDITOR
+  ENQUIRY_MANAGER
+}
+
+enum EnquiryStatus {
+  NEW
+  REVIEWING
+  QUALIFIED
+  IN_DISCUSSION
+  CONVERTED
+  CLOSED
+}
+
+enum ServiceInterest {
+  EXECUTIVE_VISIBILITY
+  THOUGHT_LEADERSHIP_GHOSTWRITING
+  STRATEGIC_CONTENT_COMMUNICATIONS
+  EXECUTIVE_COMMUNICATIONS
+  DIGITAL_PRODUCTS_WORKSHOPS
+  NOT_SURE_YET
+}
+
+enum EnquiryTimeline {
+  IMMEDIATELY
+  WITHIN_ONE_MONTH
+  ONE_TO_THREE_MONTHS
+  THREE_TO_SIX_MONTHS
+  EXPLORING
+}
+
+enum PublicationStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+/// How a portfolio entry came about. Keeping these apart is a content-integrity
+/// requirement: illustrative work must never read as commissioned client work.
+enum WorkKind {
+  COMMISSIONED
+  SAMPLE
+  CONCEPT
+}
+
+enum ProductStatus {
+  DRAFT
+  COMING_SOON
+  ACTIVE
+  ARCHIVED
+}
+
+enum OrderStatus {
+  PENDING
+  AWAITING_PAYMENT
+  PAID
+  FULFILLED
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  INITIATED
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+enum DeliveryStatus {
+  PENDING
+  AVAILABLE
+  DELIVERED
+  EXPIRED
+  REVOKED
+}
+
+enum NewsletterStatus {
+  PENDING
+  SUBSCRIBED
+  UNSUBSCRIBED
+  BOUNCED
+}
+
+enum AssetKind {
+  COVER
+  PREVIEW
+  DELIVERABLE
+}
+
+enum LegalPageSlug {
+  privacy
+  terms
+  refund_policy
+}
+
+// =============================================================================
+// Identity and access control
+// =============================================================================
+
+model AdminUser {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String    @unique
+  fullName     String
+  /// Argon2id PHC string. Never selected into any API response.
+  passwordHash String
+  role         AdminRole @default(EDITOR)
+  isActive     Boolean   @default(true)
+
+  /// Incremented on every login failure; cleared on success. Combined with
+  /// `lockedUntil` this throttles credential stuffing per account, on top of
+  /// the per-IP rate limit.
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  lastLoginAt         DateTime?
+  passwordChangedAt   DateTime  @default(now())
+  /// Set when an operator must choose a new password before using the portal.
+  mustChangePassword  Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  refreshTokens      RefreshToken[]
+  enquiryNotes       EnquiryNote[]
+  enquiryStatusMoves EnquiryStatusChange[]
+  assignedEnquiries  Enquiry[]             @relation("EnquiryAssignee")
+  auditLogs          AuditLog[]
+  authoredArticles   Article[]             @relation("ArticleCreatedBy")
+
+  @@index([role])
+  @@index([isActive])
+  @@map("admin_users")
+}
+
+/// One row per issued refresh token. Rotation replaces the row's hash and links
+/// the successor, so a replayed (already-rotated) token is detectable and the
+/// whole family can be revoked.
+model RefreshToken {
+  id        String @id @default(uuid()) @db.Uuid
+  userId    String @db.Uuid
+  user      AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// SHA-256 of the opaque token. The raw value only ever exists in the cookie.
+  tokenHash String @unique
+  /// Groups every token descended from one login, so revocation is family-wide.
+  familyId  String @db.Uuid
+
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  rotatedToId String?   @db.Uuid
+  userAgent   String?
+  ipAddress   String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([familyId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+model AuditLog {
+  id         String  @id @default(uuid()) @db.Uuid
+  actorId    String? @db.Uuid
+  actor      AdminUser? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  /// Denormalised so the trail survives account deletion. This is the one
+  /// deliberate denormalisation in the schema.
+  actorEmail String?
+
+  action     String
+  entityType String
+  entityId   String?
+  summary    String
+  /// Shallow before/after diff of the changed fields, redacted of secrets.
+  metadata   Json?
+  ipAddress  String?
+
+  createdAt DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// =============================================================================
+// Enquiries
+// =============================================================================
+
+model Enquiry {
+  id        String @id @default(uuid()) @db.Uuid
+  /// Short human-quotable reference shown to the visitor and used in email.
+  reference String @unique
+
+  fullName           String
+  workEmail          String
+  organisationOrRole String?
+  serviceInterest    ServiceInterest
+  message            String
+  timeline           EnquiryTimeline
+  budgetRange        String?
+  referralSource     String?
+
+  status       EnquiryStatus @default(NEW)
+  assignedToId String?       @db.Uuid
+  assignedTo   AdminUser?    @relation("EnquiryAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  followUpAt   DateTime?
+
+  /// When the visitor ticked the contact-consent box.
+  consentAt DateTime
+  /// Fingerprint of (email + service + message) used to collapse accidental
+  /// double submissions within a short window.
+  dedupeHash String
+  ipHash     String?
+  userAgent  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  notes         EnquiryNote[]
+  statusHistory EnquiryStatusChange[]
+
+  @@index([status, createdAt])
+  @@index([serviceInterest])
+  @@index([createdAt])
+  @@index([workEmail])
+  @@index([dedupeHash, createdAt])
+  @@index([assignedToId])
+  @@map("enquiries")
+}
+
+model EnquiryNote {
+  id        String  @id @default(uuid()) @db.Uuid
+  enquiryId String  @db.Uuid
+  enquiry   Enquiry @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
+
+  authorId String    @db.Uuid
+  author   AdminUser @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  body String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([enquiryId, createdAt])
+  @@map("enquiry_notes")
+}
+
+model EnquiryStatusChange {
+  id        String  @id @default(uuid()) @db.Uuid
+  enquiryId String  @db.Uuid
+  enquiry   Enquiry @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
+
+  fromStatus  EnquiryStatus?
+  toStatus    EnquiryStatus
+  changedById String?    @db.Uuid
+  changedBy   AdminUser? @relation(fields: [changedById], references: [id], onDelete: SetNull)
+  reason      String?
+
+  createdAt DateTime @default(now())
+
+  @@index([enquiryId, createdAt])
+  @@map("enquiry_status_changes")
+}
+
+// =============================================================================
+// Services
+// =============================================================================
+
+model Service {
+  id       String @id @default(uuid()) @db.Uuid
+  slug     String @unique
+  title    String
+  tagline  String
+  /// The business need the service addresses, in the client's language.
+  businessNeed String
+  audience String
+
+  problemHtml  String
+  problemText  String
+  approachHtml String
+  approachText String
+
+  /// Plain list of named deliverables; ordering carries meaning so an array
+  /// column is the right representation.
+  deliverables String[] @default([])
+
+  ctaHeadline String
+  ctaBody     String
+  icon        String?
+
+  seoTitle       String?
+  seoDescription String?
+  ogImageId      String?    @db.Uuid
+  ogImage        MediaAsset? @relation(fields: [ogImageId], references: [id], onDelete: SetNull)
+
+  status   PublicationStatus @default(PUBLISHED)
+  position Int               @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  components    ServiceComponent[]
+  faqs          FaqItem[]
+  processStages ServiceProcessStage[]
+  caseStudies   CaseStudyService[]
+  articles      ArticleService[]
+
+  @@index([status, position])
+  @@map("services")
+}
+
+model ServiceComponent {
+  id        String  @id @default(uuid()) @db.Uuid
+  serviceId String  @db.Uuid
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String
+  position    Int    @default(0)
+
+  @@index([serviceId, position])
+  @@map("service_components")
+}
+
+model ServiceProcessStage {
+  id        String  @id @default(uuid()) @db.Uuid
+  serviceId String  @db.Uuid
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  title    String
+  summary  String
+  detail   String
+  position Int    @default(0)
+
+  @@index([serviceId, position])
+  @@map("service_process_stages")
+}
+
+/// The studio-wide five-stage approach rendered on `/approach` and the homepage.
+model ApproachStage {
+  id       String @id @default(uuid()) @db.Uuid
+  slug     String @unique
+  position Int    @unique
+  title    String
+  summary  String
+  detailHtml String
+  detailText String
+  /// What the client contributes at this stage — approval stays with them.
+  clientRole String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("approach_stages")
+}
+
+/// FAQ entries. A row belongs either to a service or to a site-wide group.
+model FaqItem {
+  id       String  @id @default(uuid()) @db.Uuid
+  question String
+  answer   String
+  position Int     @default(0)
+
+  serviceId String?  @db.Uuid
+  service   Service? @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  groupId String?   @db.Uuid
+  group   FaqGroup? @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  isPublished Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([serviceId, position])
+  @@index([groupId, position])
+  @@map("faq_items")
+}
+
+model FaqGroup {
+  id       String @id @default(uuid()) @db.Uuid
+  slug     String @unique
+  title    String
+  position Int    @default(0)
+
+  items FaqItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("faq_groups")
+}
+
+// =============================================================================
+// Insights
+// =============================================================================
+
+model Author {
+  id     String @id @default(uuid()) @db.Uuid
+  slug   String @unique
+  name   String
+  role   String?
+  bio    String?
+
+  avatarId String?     @db.Uuid
+  avatar   MediaAsset? @relation(fields: [avatarId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  articles Article[]
+
+  @@map("authors")
+}
+
+model ArticleCategory {
+  id          String  @id @default(uuid()) @db.Uuid
+  slug        String  @unique
+  name        String
+  description String?
+  position    Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  articles Article[]
+
+  @@map("article_categories")
+}
+
+model Tag {
+  id   String @id @default(uuid()) @db.Uuid
+  slug String @unique
+  name String
+
+  createdAt DateTime @default(now())
+
+  articles ArticleTag[]
+
+  @@map("tags")
+}
+
+model Article {
+  id      String @id @default(uuid()) @db.Uuid
+  slug    String @unique
+  title   String
+  summary String
+
+  bodyHtml String
+  bodyText String
+
+  categoryId String?          @db.Uuid
+  category   ArticleCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  authorId String? @db.Uuid
+  author   Author? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  featuredImageId String?     @db.Uuid
+  featuredImage   MediaAsset? @relation("ArticleFeaturedImage", fields: [featuredImageId], references: [id], onDelete: SetNull)
+
+  status PublicationStatus @default(DRAFT)
+  /// Null until first publish. Also the scheduled moment for SCHEDULED rows:
+  /// the publisher promotes SCHEDULED → PUBLISHED once this time has passed.
+  publishedAt DateTime?
+  featured    Boolean  @default(false)
+
+  /// Cached because it is derived from the body and read on every listing.
+  readingTimeMinutes Int @default(1)
+
+  seoTitle       String?
+  seoDescription String?
+  noIndex        Boolean @default(false)
+  ogImageId      String?     @db.Uuid
+  ogImage        MediaAsset? @relation("ArticleOgImage", fields: [ogImageId], references: [id], onDelete: SetNull)
+
+  createdById String?    @db.Uuid
+  createdBy   AdminUser? @relation("ArticleCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tags     ArticleTag[]
+  services ArticleService[]
+
+  @@index([status, publishedAt])
+  @@index([categoryId, status, publishedAt])
+  @@index([featured, status])
+  @@index([publishedAt])
+  @@map("articles")
+}
+
+model ArticleTag {
+  articleId String  @db.Uuid
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  tagId     String  @db.Uuid
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, tagId])
+  @@index([tagId])
+  @@map("article_tags")
+}
+
+/// Links an article to the service it illustrates, so a service page can show
+/// genuinely relevant published samples.
+model ArticleService {
+  articleId String  @db.Uuid
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  serviceId String  @db.Uuid
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, serviceId])
+  @@index([serviceId])
+  @@map("article_services")
+}
+
+// =============================================================================
+// Selected work
+// =============================================================================
+
+model PortfolioCategory {
+  id          String  @id @default(uuid()) @db.Uuid
+  slug        String  @unique
+  name        String
+  description String?
+  position    Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  caseStudies CaseStudy[]
+
+  @@map("portfolio_categories")
+}
+
+model CaseStudy {
+  id      String @id @default(uuid()) @db.Uuid
+  slug    String @unique
+  title   String
+  summary String
+
+  kind WorkKind @default(SAMPLE)
+
+  categoryId String?            @db.Uuid
+  category   PortfolioCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  /// Client identity is withheld unless the client has approved disclosure.
+  clientName String?
+  industry   String?
+
+  challengeHtml String
+  challengeText String
+  objectiveHtml String
+  objectiveText String
+  strategicQuestion String?
+  researchApproachHtml String
+  researchApproachText String
+  editorialApproachHtml String
+  editorialApproachText String
+
+  deliverables String[] @default([])
+
+  /// Outcomes are published only when both flags below are set. The API refuses
+  /// to publish a COMMISSIONED entry without client approval.
+  outcomes         String[] @default([])
+  outcomesVerified Boolean  @default(false)
+  clientApproved   Boolean  @default(false)
+
+  coverImageId String?     @db.Uuid
+  coverImage   MediaAsset? @relation("CaseStudyCover", fields: [coverImageId], references: [id], onDelete: SetNull)
+
+  status      PublicationStatus @default(DRAFT)
+  publishedAt DateTime?
+  featured    Boolean           @default(false)
+  position    Int               @default(0)
+
+  seoTitle       String?
+  seoDescription String?
+  noIndex        Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  excerpts CaseStudyExcerpt[]
+  services CaseStudyService[]
+
+  @@index([status, publishedAt])
+  @@index([categoryId, status])
+  @@index([kind, status])
+  @@index([featured, status])
+  @@map("case_studies")
+}
+
+model CaseStudyExcerpt {
+  id          String    @id @default(uuid()) @db.Uuid
+  caseStudyId String    @db.Uuid
+  caseStudy   CaseStudy @relation(fields: [caseStudyId], references: [id], onDelete: Cascade)
+
+  label    String
+  body     String
+  position Int    @default(0)
+
+  @@index([caseStudyId, position])
+  @@map("case_study_excerpts")
+}
+
+model CaseStudyService {
+  caseStudyId String    @db.Uuid
+  caseStudy   CaseStudy @relation(fields: [caseStudyId], references: [id], onDelete: Cascade)
+  serviceId   String    @db.Uuid
+  service     Service   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@id([caseStudyId, serviceId])
+  @@index([serviceId])
+  @@map("case_study_services")
+}
+
+// =============================================================================
+// Media
+// =============================================================================
+
+/// Every stored file, whether a public image or a private deliverable.
+/// `isPublic = false` files are served only through authorised, signed routes
+/// and are never placed in a web-served directory.
+model MediaAsset {
+  id       String  @id @default(uuid()) @db.Uuid
+  /// Driver-relative key, e.g. `products/blueprint-v1.pdf`.
+  storageKey String @unique
+  driver   String  @default("local")
+  mimeType String
+  sizeBytes Int
+  /// Required for images; null for non-visual assets such as PDFs.
+  alt      String?
+  caption  String?
+  width    Int?
+  height   Int?
+  checksum String?
+  isPublic Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  services             Service[]
+  authors              Author[]
+  articleFeaturedImage Article[]  @relation("ArticleFeaturedImage")
+  articleOgImage       Article[]  @relation("ArticleOgImage")
+  caseStudyCover       CaseStudy[] @relation("CaseStudyCover")
+  productAssets        ProductAsset[]
+  siteSettingsLogo     SiteSettings[] @relation("SiteSettingsLogo")
+  siteSettingsOgImage  SiteSettings[] @relation("SiteSettingsOgImage")
+
+  @@index([isPublic])
+  @@map("media_assets")
+}
+
+// =============================================================================
+// Resources / digital products
+// =============================================================================
+
+model Product {
+  id       String @id @default(uuid()) @db.Uuid
+  slug     String @unique
+  title    String
+  subtitle String?
+  summary  String
+
+  descriptionHtml String
+  descriptionText String
+
+  intendedAudience String
+  benefits         String[] @default([])
+  contents         String[] @default([])
+
+  /// Null while pricing has not been decided. A product cannot be purchasable
+  /// without a price, enforced in the service layer and asserted in tests.
+  priceAmountMinor Int?
+  currency         String? @db.Char(3)
+
+  fileFormat    String?
+  fileSizeBytes Int?
+  pageCount     Int?
+
+  deliveryMethod String  @default("Secure, time-limited download link sent by email")
+  refundTerms    String?
+  updatePolicy   String?
+
+  status   ProductStatus @default(DRAFT)
+  featured Boolean       @default(false)
+  position Int           @default(0)
+
+  seoTitle       String?
+  seoDescription String?
+  noIndex        Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assets     ProductAsset[]
+  orderItems OrderItem[]
+  deliveries DigitalProductDelivery[]
+
+  @@index([status, position])
+  @@index([featured, status])
+  @@map("products")
+}
+
+model ProductAsset {
+  id        String  @id @default(uuid()) @db.Uuid
+  productId String  @db.Uuid
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  assetId String     @db.Uuid
+  asset   MediaAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  kind     AssetKind
+  position Int       @default(0)
+  /// Only one deliverable may be current per product.
+  isCurrent Boolean  @default(true)
+  version   String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([productId, assetId, kind])
+  @@index([productId, kind, position])
+  @@map("product_assets")
+}
+
+// =============================================================================
+// Commerce
+// =============================================================================
+
+model Order {
+  id        String @id @default(uuid()) @db.Uuid
+  reference String @unique
+
+  customerEmail String
+  customerName  String
+
+  status OrderStatus @default(PENDING)
+
+  /// Totals are recomputed server-side from the locked item prices.
+  totalAmountMinor Int
+  currency         String @db.Char(3)
+
+  /// Client-supplied key making checkout retries safe.
+  idempotencyKey String? @unique
+  /// Opaque secret the thank-you page presents to fetch its own order.
+  accessTokenHash String? @unique
+
+  paidAt      DateTime?
+  fulfilledAt DateTime?
+  failureReason String?
+
+  ipHash    String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items      OrderItem[]
+  payments   PaymentTransaction[]
+  deliveries DigitalProductDelivery[]
+
+  @@index([status, createdAt])
+  @@index([customerEmail])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id      String @id @default(uuid()) @db.Uuid
+  orderId String @db.Uuid
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId String  @db.Uuid
+  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  /// Snapshot of the title and price at purchase time, so later edits to the
+  /// product never rewrite history.
+  productTitle   String
+  unitPriceMinor Int
+  currency       String @db.Char(3)
+  quantity       Int    @default(1)
+  subtotalMinor  Int
+
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model PaymentTransaction {
+  id      String @id @default(uuid()) @db.Uuid
+  orderId String @db.Uuid
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  provider          String
+  providerReference String?
+  status            PaymentStatus @default(INITIATED)
+
+  amountMinor Int
+  currency    String @db.Char(3)
+
+  /// Provider event id. Unique so a redelivered webhook is a no-op: this
+  /// constraint is what makes payment processing idempotent.
+  providerEventId String? @unique
+
+  /// Raw provider payload, retained for reconciliation. Secrets are stripped
+  /// before storage.
+  rawPayload Json?
+
+  verifiedAt    DateTime?
+  failureReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([provider, providerReference])
+  @@index([orderId])
+  @@index([status])
+  @@map("payment_transactions")
+}
+
+model DigitalProductDelivery {
+  id      String @id @default(uuid()) @db.Uuid
+  orderId String @db.Uuid
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId String  @db.Uuid
+  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  /// The exact asset version the customer bought.
+  assetId String? @db.Uuid
+
+  status DeliveryStatus @default(PENDING)
+
+  downloadCount Int @default(0)
+  maxDownloads  Int @default(5)
+  expiresAt     DateTime?
+  deliveredAt   DateTime?
+  lastDownloadAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([orderId, productId])
+  @@index([status])
+  @@map("digital_product_deliveries")
+}
+
+// =============================================================================
+// Newsletter
+// =============================================================================
+
+model NewsletterSubscriber {
+  id    String @id @default(uuid()) @db.Uuid
+  email String @unique
+
+  fullName String?
+  status   NewsletterStatus @default(PENDING)
+  source   String?
+
+  consentAt      DateTime?
+  subscribedAt   DateTime?
+  unsubscribedAt DateTime?
+  /// Opaque token embedded in unsubscribe links.
+  unsubscribeToken String @unique
+
+  ipHash String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@map("newsletter_subscribers")
+}
+
+// =============================================================================
+// Testimonials — only approved, genuine entries are ever served publicly.
+// =============================================================================
+
+model Testimonial {
+  id    String @id @default(uuid()) @db.Uuid
+  quote String
+
+  attributionName         String
+  attributionRole         String?
+  attributionOrganisation String?
+
+  /// Set only once the business confirms the person authorised publication.
+  isApproved  Boolean   @default(false)
+  approvedAt  DateTime?
+  approvedBy  String?
+  /// Where the quote came from, for the business's own records.
+  sourceNote  String?
+
+  status      PublicationStatus @default(DRAFT)
+  publishedAt DateTime?
+  position    Int               @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, isApproved, position])
+  @@map("testimonials")
+}
+
+// =============================================================================
+// Site configuration and legal pages
+// =============================================================================
+
+/// Single-row configuration table. `id` is pinned to 1 by a check constraint
+/// added in the migration, so there can only ever be one settings row.
+model SiteSettings {
+  id Int @id @default(1)
+
+  siteName            String @default("InkVision Creatives")
+  tagline             String @default("Make your expertise visible.")
+  supportingStatement String
+
+  contactEmail String?
+  contactPhone String?
+  addressLines String[] @default([])
+
+  /// `[{ platform, url, label }]` — a short, order-sensitive list that gains
+  /// nothing from its own table.
+  socialProfiles Json @default("[]")
+
+  newsletterEnabled  Boolean @default(true)
+  newsletterHeadline String  @default("Insights on executive visibility")
+  newsletterBody     String  @default("Occasional, considered writing on positioning, thought leadership and communicating expertise.")
+
+  notificationEmail String?
+  schedulingUrl     String?
+
+  defaultSeoTitle       String
+  defaultSeoDescription String
+
+  logoId String?     @db.Uuid
+  logo   MediaAsset? @relation("SiteSettingsLogo", fields: [logoId], references: [id], onDelete: SetNull)
+
+  defaultOgImageId String?     @db.Uuid
+  defaultOgImage   MediaAsset? @relation("SiteSettingsOgImage", fields: [defaultOgImageId], references: [id], onDelete: SetNull)
+
+  /// Left null until the business supplies its registered legal identity.
+  legalEntityName String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
+model LegalPage {
+  id   String        @id @default(uuid()) @db.Uuid
+  slug LegalPageSlug @unique
+
+  title    String
+  bodyHtml String
+  bodyText String
+
+  status      PublicationStatus @default(PUBLISHED)
+  /// True while the page still carries unreviewed template copy. The website
+  /// renders a visible notice whenever this is set.
+  awaitingReview Boolean @default(true)
+  effectiveAt    DateTime?
+
+  seoTitle       String?
+  seoDescription String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("legal_pages")
+}

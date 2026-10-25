@@ -1,0 +1,46 @@
+{
+  "name": "inkvision-creatives",
+  "version": "0.1.0",
+  "private": true,
+  "description": "InkVision Creatives — executive visibility and strategic communications studio website",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter \"./apps/**\" dev",
+    "dev:web": "pnpm --filter @inkvision/web dev",
+    "dev:api": "pnpm --filter @inkvision/api dev",
+    "build": "pnpm --filter @inkvision/shared-types build && pnpm --filter @inkvision/api build && pnpm --filter @inkvision/web build",
+    "build:web": "pnpm --filter @inkvision/shared-types build && pnpm --filter @inkvision/web build",
+    "build:api": "pnpm --filter @inkvision/shared-types build && pnpm --filter @inkvision/api build",
+    "start:web": "pnpm --filter @inkvision/web start",
+    "start:api": "pnpm --filter @inkvision/api start:prod",
+    "lint": "pnpm -r lint",
+    "lint:fix": "pnpm -r lint:fix",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "test:api": "pnpm --filter @inkvision/api test",
+    "test:web": "pnpm --filter @inkvision/web test",
+    "test:integration": "pnpm --filter @inkvision/api test:integration",
+    "test:e2e": "pnpm --filter @inkvision/web test:e2e",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,yml,yaml}\"",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:generate": "pnpm --filter @inkvision/api prisma:generate",
+    "db:migrate": "pnpm --filter @inkvision/api prisma:migrate",
+    "db:migrate:deploy": "pnpm --filter @inkvision/api prisma:migrate:deploy",
+    "db:seed": "pnpm --filter @inkvision/api prisma:seed",
+    "db:studio": "pnpm --filter @inkvision/api prisma:studio",
+    "db:reset": "pnpm --filter @inkvision/api prisma:reset",
+    "admin:create": "pnpm --filter @inkvision/api admin:create",
+    "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "prettier": "3.9.10",
+    "prettier-plugin-tailwindcss": "0.7.1",
+    "typescript": "6.0.3"
+  }
+}

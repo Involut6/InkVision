@@ -1,0 +1,58 @@
+# Local development services for InkVision Creatives.
+#
+#   docker compose up -d postgres     # primary database
+#   docker compose --profile test up -d postgres-test   # isolated DB for integration tests
+#   docker compose --profile mail up -d mailpit          # local SMTP inbox on :8025
+#
+# Credentials here are development-only placeholders. Never reuse them in production.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: inkvision-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-inkvision}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-inkvision_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-inkvision}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - inkvision-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-inkvision} -d ${POSTGRES_DB:-inkvision}']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: inkvision-postgres-test
+    profiles: ['test']
+    environment:
+      POSTGRES_USER: inkvision
+      POSTGRES_PASSWORD: inkvision_test_password
+      POSTGRES_DB: inkvision_test
+    ports:
+      - '${POSTGRES_TEST_PORT:-5433}:5432'
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U inkvision -d inkvision_test']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: inkvision-mailpit
+    profiles: ['mail']
+    restart: unless-stopped
+    ports:
+      - '${MAILPIT_SMTP_PORT:-1025}:1025'
+      - '${MAILPIT_UI_PORT:-8025}:8025'
+
+volumes:
+  inkvision-postgres-data:
+    name: inkvision-postgres-data

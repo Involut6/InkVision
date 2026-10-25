@@ -1,0 +1,160 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Lint, typecheck, test and build
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: inkvision
+          POSTGRES_PASSWORD: inkvision_test_password
+          POSTGRES_DB: inkvision_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # Obviously-fake values. Real secrets never belong in CI configuration;
+      # these exist only to satisfy startup validation.
+      DATABASE_URL: postgresql://inkvision:inkvision_test_password@localhost:5432/inkvision_test?schema=public
+      TEST_DATABASE_URL: postgresql://inkvision:inkvision_test_password@localhost:5432/inkvision_test?schema=public
+      JWT_ACCESS_SECRET: ci-access-secret-value-0123456789abcdefghij
+      JWT_REFRESH_SECRET: ci-refresh-secret-value-9876543210zyxwvutsr
+      CSRF_SECRET: ci-csrf-secret-value-abcdefghijklmnopqrstuv
+      DOWNLOAD_LINK_SECRET: ci-download-secret-value-pqrstuvwxyz0123456
+      CORS_ORIGINS: http://localhost:3000
+      EMAIL_PROVIDER: console
+      API_BASE_URL: http://localhost:4000/api/v1
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:4000/api/v1
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Generate the Prisma client
+        run: pnpm db:generate
+
+      - name: Apply migrations
+        run: pnpm db:migrate:deploy
+
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm test:integration
+      - run: pnpm build
+
+  e2e:
+    name: End-to-end journeys
+    runs-on: ubuntu-latest
+    needs: verify
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: inkvision
+          POSTGRES_PASSWORD: inkvision_e2e_password
+          POSTGRES_DB: inkvision_e2e
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://inkvision:inkvision_e2e_password@localhost:5432/inkvision_e2e?schema=public
+      JWT_ACCESS_SECRET: ci-access-secret-value-0123456789abcdefghij
+      JWT_REFRESH_SECRET: ci-refresh-secret-value-9876543210zyxwvutsr
+      CSRF_SECRET: ci-csrf-secret-value-abcdefghijklmnopqrstuv
+      DOWNLOAD_LINK_SECRET: ci-download-secret-value-pqrstuvwxyz0123456
+      CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+      EMAIL_PROVIDER: console
+      API_PORT: 4000
+      API_HOST: 127.0.0.1
+      API_BASE_URL: http://127.0.0.1:4000/api/v1
+      NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:4000/api/v1
+      NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
+      E2E_BASE_URL: http://127.0.0.1:3000
+      ADMIN_E2E_EMAIL: e2e@example.com
+      ADMIN_PASSWORD: ci-end-to-end-password-0123456789
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:generate
+      - run: pnpm db:migrate:deploy
+      - run: pnpm db:seed
+
+      - name: Create the end-to-end administrator
+        run: pnpm admin:create --email "$ADMIN_E2E_EMAIL" --name "End To End" --role OWNER
+
+      - run: pnpm build
+
+      - name: Install the Playwright browser
+        run: pnpm --filter @inkvision/web exec playwright install --with-deps chromium
+
+      # `next build` leaves the static assets and `public/` outside the
+      # standalone bundle; without this the pages render unstyled.
+      - name: Assemble the standalone server
+        run: |
+          cp -r apps/web/.next/static apps/web/.next/standalone/apps/web/.next/static
+          if [ -d apps/web/public ]; then
+            cp -r apps/web/public apps/web/.next/standalone/apps/web/public
+          fi
+
+      - name: Start both applications
+        env:
+          HOSTNAME: 127.0.0.1
+          PORT: 3000
+        run: |
+          node apps/api/dist/main.js > /tmp/api.log 2>&1 &
+          node apps/web/.next/standalone/apps/web/server.js > /tmp/web.log 2>&1 &
+          npx --yes wait-on http://127.0.0.1:4000/api/v1/health http://127.0.0.1:3000 --timeout 120000
+
+      - name: Run the journeys
+        env:
+          ADMIN_E2E_PASSWORD: ${{ env.ADMIN_PASSWORD }}
+        run: pnpm test:e2e
+
+      - name: Application logs
+        if: failure()
+        run: tail -n 200 /tmp/api.log /tmp/web.log
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7

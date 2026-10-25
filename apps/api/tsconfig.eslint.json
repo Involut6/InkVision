@@ -1,0 +1,10 @@
+{
+  "// note": "Type-aware linting needs a project that covers tests, scripts and config files too — the build tsconfig deliberately excludes them.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "."
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts", "prisma/**/*.ts", "scripts/**/*.ts", "*.ts"],
+  "exclude": ["node_modules", "dist", "src/generated", "prisma.config.ts"]
+}

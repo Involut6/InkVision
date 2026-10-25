@@ -1,0 +1,7 @@
+dist
+.next
+coverage
+pnpm-lock.yaml
+*.md
+apps/api/prisma/migrations
+next-env.d.ts
