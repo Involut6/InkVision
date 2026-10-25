@@ -37,6 +37,9 @@ blob-report/
 .local-storage/
 .tmp/
 
+# local git bundles (e.g. handing the branch over when a push is blocked)
+*.bundle
+
 # editors / OS
 .DS_Store
 .idea/
