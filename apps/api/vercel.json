@@ -1,17 +1,13 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "pnpm build",
+  "outputDirectory": "public",
   "functions": {
     "api/index.js": {
       "memory": 1024,
-      "maxDuration": 30,
-      "includeFiles": "../../node_modules/.pnpm/@node-rs+argon2-linux-x64-gnu*/**"
+      "maxDuration": 30
     }
   },
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/api"
-    }
-  ],
-  "buildCommand": "pnpm build"
+  "rewrites": [{ "source": "/(.*)", "destination": "/api" }]
 }

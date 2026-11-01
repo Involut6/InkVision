@@ -426,11 +426,31 @@ repository, each with its own root directory:
 | Project | Root directory | Framework preset | Build command |
 | --- | --- | --- | --- |
 | Website | `apps/web` | Next.js | (default) |
-| API | `apps/api` | Other | `pnpm build` |
+| API | `apps/api` | **Other** | `pnpm build` |
 
 Pointing one project at the repository root, or at the wrong app, builds the
 wrong thing — that is what a root directory of `apps/api` on a Next.js preset
 produces.
+
+`apps/api/vercel.json` sets `"framework": null`, which forces the preset to
+Other regardless of what the dashboard detected, and also supplies the build
+command, the function configuration and the routing. Setting the preset to
+Other in the dashboard as well does no harm.
+
+**Do not let Vercel use its NestJS preset for this project.** That preset
+detects an entrypoint by looking for a literal `@nestjs/core` import, which
+`src/main.ts` does not have — the Nest bootstrap lives in `src/bootstrap.ts`
+so that the server and the function share it. With the preset active the build
+fails with:
+
+```
+Error: [BUILD_FAILED] No entrypoint found which imports nestjs.
+Found possible entrypoint: src/main.ts
+```
+
+That is the preset refusing to build, not a problem with the code. `"framework":
+null` is the fix; adding an unused `@nestjs/core` import to satisfy the detector
+is not.
 
 Each app builds standalone from a fresh clone: its `prebuild` compiles
 `@inkvision/shared-types` first, so `pnpm build` inside either app directory is
@@ -463,6 +483,18 @@ Two details are load-bearing, both learned the hard way:
 - **`init()` is not optional.** `listen()` normally triggers it; without it the
   module graph is built but no lifecycle hook runs, so the database is never
   connected.
+
+`apps/api/public/` exists because Vercel expects a static output directory
+alongside the functions. It holds a `robots.txt` that disallows everything: the
+API host serves JSON and the Swagger document, neither of which belongs in a
+search index. Static files are matched before rewrites, so it is served as
+itself while every other path goes to the function.
+
+One thing to watch on the first deploy: password hashing uses
+`@node-rs/argon2`, a native module. Vercel traces it into the bundle
+automatically, and if that ever fails the symptom is specific — admin login
+returning a 500 while every other endpoint works. Nothing else in the
+application depends on a native binary.
 
 `test/integration/serverless-entry.spec.ts` exercises this path — liveness,
 readiness, an unauthorised admin call, validation and a 404 — so a refactor

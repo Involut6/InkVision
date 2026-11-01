@@ -1,0 +1,4 @@
+# This host serves the API, not pages for people to read. Nothing here should
+# appear in a search index — not API responses, and not the Swagger document.
+User-agent: *
+Disallow: /
