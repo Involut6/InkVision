@@ -49,6 +49,17 @@ export class AppConfigService {
     return this.get('DATABASE_URL');
   }
 
+  /**
+   * True when each request may be served by its own short-lived instance.
+   *
+   * Vercel sets `VERCEL` itself; `SERVERLESS` covers every other such
+   * platform. What it changes: the size of the database connection pool, and
+   * which storage drivers are accepted.
+   */
+  get isServerless(): boolean {
+    return this.get('SERVERLESS') || this.get('VERCEL');
+  }
+
   get corsOrigins(): readonly string[] {
     return this.get('CORS_ORIGINS');
   }

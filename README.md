@@ -418,23 +418,103 @@ satisfy startup validation. Nothing real belongs there — see
 The website and the API are deployed independently and **must not be assumed to
 share a hostname or port**. Configure them explicitly.
 
-### Which host for which app
+### Two projects, one repository
 
-The API is a long-lived NestJS process holding a PostgreSQL connection pool. It
-belongs on a host that runs a persistent server — Railway, Render, Fly.io,
-a container platform, a VPS. It is **not** suited to a serverless or
-edge-function host.
+Both apps deploy to Vercel, as **two separate projects** from this one
+repository, each with its own root directory:
 
-The website is a Next.js app and runs anywhere Next.js does, Vercel included.
+| Project | Root directory | Framework preset | Build command |
+| --- | --- | --- | --- |
+| Website | `apps/web` | Next.js | (default) |
+| API | `apps/api` | Other | `pnpm build` |
 
-On a platform that builds one app per project, set the project's **root
-directory** to `apps/web` or `apps/api` accordingly, and create two projects
-rather than one. Pointing a single project at the repository root, or at the
-wrong app, builds the wrong thing.
+Pointing one project at the repository root, or at the wrong app, builds the
+wrong thing — that is what a root directory of `apps/api` on a Next.js preset
+produces.
 
 Each app builds standalone from a fresh clone: its `prebuild` compiles
 `@inkvision/shared-types` first, so `pnpm build` inside either app directory is
-enough and no particular ordering has to be configured on the host.
+enough and no ordering has to be configured on the host.
+
+The API can equally run as a long-lived process — a container, Railway,
+Render, Fly.io, a VPS — with `node dist/main.js`. Both shapes are supported by
+one codebase and one build; see below for what changes on Vercel.
+
+### How the API runs on Vercel
+
+Vercel serves each request from a short-lived function, so there is no
+persistent server. `apps/api/api/index.js` is the entry point: it configures
+the application through the same `createApiApp()` that `main.ts` uses, calls
+`init()` instead of `listen()`, and hands the Express instance underneath Nest
+the request directly. The instance is cached in module scope, so only the first
+request on a fresh instance pays the bootstrap cost. `apps/api/vercel.json`
+rewrites every path to that function, and Express sees the original URL, so
+`/api/v1/...` reaches the same controllers either way.
+
+Two details are load-bearing, both learned the hard way:
+
+- **The entry point is JavaScript, not TypeScript.** Vercel compiles
+  TypeScript functions with esbuild, which cannot emit
+  `emitDecoratorMetadata` — and Nest resolves constructor dependencies from
+  exactly that metadata. A `.ts` entry point makes esbuild re-transpile the
+  application and every injected dependency fails to resolve at bootstrap. The
+  entry imports already-compiled output from `dist/`, preserving the metadata
+  `tsc` emitted during `pnpm build`.
+- **`init()` is not optional.** `listen()` normally triggers it; without it the
+  module graph is built but no lifecycle hook runs, so the database is never
+  connected.
+
+`test/integration/serverless-entry.spec.ts` exercises this path — liveness,
+readiness, an unauthorised admin call, validation and a 404 — so a refactor
+that moves setup into the listen path fails a test instead of only failing in
+production.
+
+### What changes on a serverless platform
+
+Set `SERVERLESS=true` on any such platform other than Vercel, which sets
+`VERCEL` itself. Three consequences:
+
+1. **Use a pooled `DATABASE_URL`.** Every function instance opens its own
+   connection pool, so direct connections exhaust PostgreSQL's limit under
+   load. Point `DATABASE_URL` at your provider's pooler endpoint (Neon, Supabase
+   and friends all offer one) and keep the direct URL for running migrations.
+   The pool is capped at one connection per instance automatically.
+2. **`STORAGE_DRIVER=local` is refused at startup.** A function's filesystem is
+   read-only apart from `/tmp`, which is discarded between invocations, so
+   uploaded media and purchasable files would vanish. Use `s3`.
+3. **Rate limiting becomes per-instance.** The limiter keeps its counters in
+   memory, and each instance has its own, so the effective limit multiplies by
+   however many instances are warm. Public endpoints are unaffected in
+   practice, but **login throttling is weakened** — the control that caps
+   password guessing. The fix is a shared counter store (Redis, e.g. Upstash);
+   see Outstanding business decisions.
+
+### Cookies across two Vercel projects
+
+This decides whether the administration portal can log in at all, so settle it
+before you deploy.
+
+The admin session is a cookie. A cookie set by the API is only sent back by the
+browser on a cross-site request if it is `SameSite=none; Secure` — and
+`vercel.app` is on the public suffix list, so `inkvision.vercel.app` and
+`inkvision-api.vercel.app` are **different sites**, not two subdomains of one.
+
+| Setup | `AUTH_COOKIE_SAMESITE` | Works in Safari? |
+| --- | --- | --- |
+| `inkvision.com` + `api.inkvision.com` | `lax` | yes |
+| `*.vercel.app` + `*.vercel.app` | `none` (with `AUTH_COOKIE_SECURE=true`) | **unreliable** |
+
+Safari and Firefox block third-party cookies by default, and an admin cookie on
+a different registrable domain is exactly that. The portal would work in Chrome
+and fail elsewhere.
+
+**Use custom domains on one registrable domain**: the website on
+`inkvision.com`, the API on `api.inkvision.com`. Then `AUTH_COOKIE_SAMESITE=lax`
+is correct, no third-party cookie is involved, and `AUTH_COOKIE_DOMAIN` can be
+left blank for host-only cookies.
+
+The default `*.vercel.app` pair is fine for a preview deployment where you only
+browse the public site. Don't rely on it for admin work.
 
 ### Deploy the API before the website
 
@@ -491,6 +571,42 @@ Set before building, since `NEXT_PUBLIC_*` values are inlined at build time:
 - `API_BASE_URL` — how the Next.js **server** reaches the API (may be internal)
 - `NEXT_PUBLIC_API_BASE_URL` — how the **browser** reaches it (must be public)
 - `NEXT_PUBLIC_SITE_URL` — the canonical site URL, used for canonicals, sitemap and OpenGraph
+
+### Vercel environment variables
+
+Set these in each project's settings. The website's are read at **build**
+time, so a change needs a redeploy, not just a restart.
+
+**API project** (`apps/api`)
+
+```
+DATABASE_URL           pooled connection string
+JWT_ACCESS_SECRET      openssl rand -base64 48
+JWT_REFRESH_SECRET     openssl rand -base64 48   (different from the above)
+CSRF_SECRET            openssl rand -base64 48
+DOWNLOAD_LINK_SECRET   openssl rand -base64 48
+NODE_ENV               production
+CORS_ORIGINS           https://inkvision.com
+PUBLIC_WEB_URL         https://inkvision.com
+PUBLIC_API_URL         https://api.inkvision.com
+AUTH_COOKIE_SECURE     true
+AUTH_COOKIE_SAMESITE   lax        (none, if the two are on different sites)
+STORAGE_DRIVER         s3         (local is refused here)
+S3_*                   your bucket's settings
+SWAGGER_ENABLED        false
+```
+
+**Website project** (`apps/web`)
+
+```
+API_BASE_URL                  https://api.inkvision.com/api/v1
+NEXT_PUBLIC_API_BASE_URL      https://api.inkvision.com/api/v1
+NEXT_PUBLIC_SITE_URL          https://inkvision.com
+NEXT_PUBLIC_COMMERCE_ENABLED  false
+```
+
+Both API URLs are needed and are not interchangeable: the first is how the
+Next.js server fetches, the second is how the browser does.
 
 ### Email
 
@@ -666,6 +782,18 @@ not a code change.
 15. **Display timezone.** Dates render in `Europe/London`
     (`apps/web/src/lib/utils.ts`). Change it to the studio's own timezone — a
     fixed zone, not the visitor's locale, so server and client renders agree.
+
+### Infrastructure
+
+**Shared rate-limit counters.** On Vercel the limiter counts in each function
+instance's own memory, so the effective limit multiplies by the number of warm
+instances. Public endpoints tolerate this; login throttling does not — it is
+the control that caps password guessing. A shared store (Redis, e.g. Upstash
+Redis, which Vercel integrates) fixes it. Needs an account and a decision on
+cost. On a single long-lived server this does not arise.
+
+**Connection pooler.** `DATABASE_URL` on Vercel must point at a pooler rather
+than the database directly. Which one depends on where PostgreSQL is hosted.
 
 ### Optional integrations
 

@@ -88,6 +88,12 @@ export const envSchema = z
     SMTP_USER: z.string().optional(),
     SMTP_PASSWORD: z.string().optional(),
 
+    // Set automatically on Vercel; set it yourself on any other
+    // function-per-request platform. It shrinks the connection pool and
+    // refuses settings that only work on a persistent server.
+    SERVERLESS: booleanish.default(false),
+    VERCEL: booleanish.default(false),
+
     STORAGE_DRIVER: z.enum(['local', 's3']).default('local'),
     STORAGE_LOCAL_ROOT: z.string().default('./.local-storage'),
     S3_ENDPOINT: z.string().optional(),
@@ -138,6 +144,19 @@ export const envSchema = z
         code: 'custom',
         path: ['SMTP_HOST'],
         message: 'SMTP_HOST is required when EMAIL_PROVIDER=smtp.',
+      });
+    }
+
+    // A function's filesystem is read-only apart from /tmp, and /tmp is
+    // discarded between invocations. Uploaded media and purchasable files
+    // would vanish, so this is refused rather than left to surprise someone.
+    if ((env.SERVERLESS || env.VERCEL) && env.STORAGE_DRIVER === 'local') {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['STORAGE_DRIVER'],
+        message:
+          'STORAGE_DRIVER=local cannot be used on a serverless platform: the filesystem is ' +
+          'read-only and not shared between invocations. Use STORAGE_DRIVER=s3.',
       });
     }
 

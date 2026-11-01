@@ -17,7 +17,20 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
   constructor(config: AppConfigService) {
     super({
-      adapter: new PrismaPg({ connectionString: config.databaseUrl }),
+      adapter: new PrismaPg({
+        connectionString: config.databaseUrl,
+        /**
+         * One connection per instance when serving requests from functions.
+         *
+         * A function platform runs many instances at once, each with its own
+         * pool, so the default pool size multiplies into hundreds of
+         * connections and exhausts PostgreSQL's limit. One apiece, plus a
+         * connection pooler in front of the database (see README →
+         * Deployment), keeps the total bounded.
+         */
+        max: config.isServerless ? 1 : 10,
+        idleTimeoutMillis: config.isServerless ? 10_000 : 30_000,
+      }),
       log: config.isProduction ? ['warn', 'error'] : ['warn', 'error'],
     });
   }

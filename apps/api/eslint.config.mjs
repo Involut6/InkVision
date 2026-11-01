@@ -85,6 +85,26 @@ export default tseslint.config(
 
   {
     /**
+     * The Vercel entry point is plain JavaScript on purpose — see the comment
+     * in the file — so it sits outside the TypeScript project and cannot be
+     * type-aware linted. The ordinary JavaScript rules still apply.
+     */
+    files: ['api/**/*.js'],
+    languageOptions: {
+      // Not part of the TypeScript project, so type-aware rules cannot run
+      // here; turning the project off is what stops the parser erroring.
+      parserOptions: { project: false, program: null },
+      globals: { console: 'readonly' },
+    },
+    rules: {
+      ...tseslint.configs.disableTypeChecked.rules,
+      // The bootstrap failure path logs; the structured logger is not up yet.
+      'no-console': 'off',
+    },
+  },
+
+  {
+    /**
      * Provider and driver stubs implement an async interface by throwing. That
      * is the point — an unimplemented integration must fail closed rather than
      * return a plausible result — so `require-await` is relaxed for exactly
