@@ -1,4 +1,33 @@
+import { existsSync } from 'node:fs';
+
 import type { NextConfig } from 'next';
+
+/**
+ * `@inkvision/shared-types` is the compile-time contract between this app and
+ * the API, and it resolves to its compiled `dist/`. Running `next build`
+ * without having built it first produces a wall of "Can't resolve
+ * '@inkvision/shared-types'" errors, one per importing file, which says
+ * nothing about the actual cause.
+ *
+ * `pnpm build` in this directory handles it — the package's `prebuild` script
+ * compiles the dependency. A tool that invokes `next build` directly skips
+ * that, so the check below fails with one readable sentence instead.
+ */
+const sharedTypesEntry = new URL('../../packages/shared-types/dist/index.js', import.meta.url);
+
+if (!existsSync(sharedTypesEntry)) {
+  throw new Error(
+    [
+      '@inkvision/shared-types has not been built, so this build cannot resolve it.',
+      '',
+      '  Build it with:  pnpm --filter @inkvision/shared-types build',
+      '  Or build this app the usual way, which does it for you:  pnpm build',
+      '',
+      'On a host that runs `next build` directly — Vercel with the Next.js preset',
+      "does — set the project's build command to `pnpm run build`.",
+    ].join('\n'),
+  );
+}
 
 /**
  * Security headers applied to every response. `Content-Security-Policy` is set

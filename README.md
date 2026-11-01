@@ -432,10 +432,21 @@ Pointing one project at the repository root, or at the wrong app, builds the
 wrong thing — that is what a root directory of `apps/api` on a Next.js preset
 produces.
 
-`apps/api/vercel.json` sets `"framework": null`, which forces the preset to
-Other regardless of what the dashboard detected, and also supplies the build
-command, the function configuration and the routing. Setting the preset to
-Other in the dashboard as well does no harm.
+Each app carries its own `vercel.json`, so neither depends on a dashboard
+setting being right. `apps/web/vercel.json` pins the build command;
+`apps/api/vercel.json` pins the build command, forces the preset to Other
+regardless of what the dashboard detected, and supplies the function
+configuration and the routing. Setting the API project's preset to Other in
+the dashboard as well does no harm.
+
+**The website's build command must be `pnpm run build`, not `next build`.**
+Vercel's Next.js preset runs `next build` directly, which skips the `prebuild`
+that compiles `@inkvision/shared-types` — and the website imports that package
+in about thirty files, so the build fails with a "Can't resolve
+'@inkvision/shared-types'" error for each one. `apps/web/vercel.json` pins the
+command. If anything bypasses it, `next.config.ts` checks for the compiled
+package and fails with a single sentence naming the fix rather than that wall
+of errors.
 
 **Do not let Vercel use its NestJS preset for this project.** That preset
 detects an entrypoint by looking for a literal `@nestjs/core` import, which
