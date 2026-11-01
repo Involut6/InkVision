@@ -418,6 +418,33 @@ satisfy startup validation. Nothing real belongs there — see
 The website and the API are deployed independently and **must not be assumed to
 share a hostname or port**. Configure them explicitly.
 
+### Which host for which app
+
+The API is a long-lived NestJS process holding a PostgreSQL connection pool. It
+belongs on a host that runs a persistent server — Railway, Render, Fly.io,
+a container platform, a VPS. It is **not** suited to a serverless or
+edge-function host.
+
+The website is a Next.js app and runs anywhere Next.js does, Vercel included.
+
+On a platform that builds one app per project, set the project's **root
+directory** to `apps/web` or `apps/api` accordingly, and create two projects
+rather than one. Pointing a single project at the repository root, or at the
+wrong app, builds the wrong thing.
+
+Each app builds standalone from a fresh clone: its `prebuild` compiles
+`@inkvision/shared-types` first, so `pnpm build` inside either app directory is
+enough and no particular ordering has to be configured on the host.
+
+### Deploy the API before the website
+
+The website's service, insight, resource and work detail pages are prerendered
+from live API data at build time. If the API is unreachable while the website
+builds, the build still succeeds — it degrades to empty states rather than
+failing — but nothing is prerendered. Those pages then render on demand instead,
+and `sitemap.xml` is empty until its first revalidation. Deploy and migrate the
+API first, confirm `/api/v1/health`, then build the website against it.
+
 ### Database
 
 ```bash
