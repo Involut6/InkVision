@@ -46,6 +46,37 @@ async function safeList<T>(fetcher: () => Promise<T[]>, label: string): Promise<
   }
 }
 
+/**
+ * Fetches one resource, distinguishing "there is no such thing" from "we could
+ * not ask".
+ *
+ * The difference matters. `null` makes the caller render a 404, which tells
+ * visitors and search engines the page is gone. That is true for an unknown
+ * slug and false during an API outage — a 404 for an existing page is a worse
+ * answer than an error, and if a crawler sees it the page can be dropped from
+ * the index. So only a genuine 404 from the API becomes `null`; anything else
+ * is surfaced.
+ *
+ * The exception is the production build. `generateStaticParams` already
+ * returns nothing when its list call fails, so detail pages are not
+ * prerendered during an outage — but pages with fixed slugs, the legal pages
+ * among them, would fail the build. Degrading to an empty state is the better
+ * outcome there: a deployment that cannot reach its API yet is a normal
+ * ordering problem, not a reason to have no site at all.
+ */
+const IS_PRODUCTION_BUILD = process.env.NEXT_PHASE === 'phase-production-build';
+
+async function safeDetail<T>(fetcher: () => Promise<T>, label: string): Promise<T | null> {
+  try {
+    return await fetcher();
+  } catch (error) {
+    if (isApiError(error) && error.isNotFound) return null;
+    reportContentFailure(label, error);
+    if (IS_PRODUCTION_BUILD) return null;
+    throw error;
+  }
+}
+
 function reportContentFailure(label: string, error: unknown): void {
   // Logged server-side so an API outage is diagnosable, while the page still
   // renders its empty state for the visitor.
@@ -106,15 +137,13 @@ export const getServices = cache(async (): Promise<ServiceSummaryDto[]> =>
 );
 
 export const getService = cache(async (slug: string): Promise<ServiceDto | null> => {
-  try {
-    return await serverApi().get<ServiceDto>(`/services/${encodeURIComponent(slug)}`, {
-      next: CACHE.services,
-    });
-  } catch (error) {
-    if (isApiError(error) && error.isNotFound) return null;
-    reportContentFailure(`service ${slug}`, error);
-    return null;
-  }
+  return safeDetail(
+    () =>
+      serverApi().get<ServiceDto>(`/services/${encodeURIComponent(slug)}`, {
+        next: CACHE.services,
+      }),
+    `service ${slug}`,
+  );
 });
 
 // -----------------------------------------------------------------------------
@@ -142,15 +171,13 @@ export const getTestimonials = cache(async (): Promise<TestimonialDto[]> =>
 );
 
 export const getLegalPage = cache(async (slug: string): Promise<LegalPageDto | null> => {
-  try {
-    return await serverApi().get<LegalPageDto>(`/legal/${encodeURIComponent(slug)}`, {
-      next: CACHE.pages,
-    });
-  } catch (error) {
-    if (isApiError(error) && error.isNotFound) return null;
-    reportContentFailure(`legal page ${slug}`, error);
-    return null;
-  }
+  return safeDetail(
+    () =>
+      serverApi().get<LegalPageDto>(`/legal/${encodeURIComponent(slug)}`, {
+        next: CACHE.pages,
+      }),
+    `legal page ${slug}`,
+  );
 });
 
 // -----------------------------------------------------------------------------
@@ -200,15 +227,13 @@ export const getArticles = cache(
 );
 
 export const getArticle = cache(async (slug: string): Promise<ArticleDto | null> => {
-  try {
-    return await serverApi().get<ArticleDto>(`/articles/${encodeURIComponent(slug)}`, {
-      next: CACHE.articles,
-    });
-  } catch (error) {
-    if (isApiError(error) && error.isNotFound) return null;
-    reportContentFailure(`article ${slug}`, error);
-    return null;
-  }
+  return safeDetail(
+    () =>
+      serverApi().get<ArticleDto>(`/articles/${encodeURIComponent(slug)}`, {
+        next: CACHE.articles,
+      }),
+    `article ${slug}`,
+  );
 });
 
 export const getArticleCategories = cache(async (): Promise<ArticleCategoryDto[]> =>
@@ -255,15 +280,13 @@ export const getCaseStudies = cache(
 );
 
 export const getCaseStudy = cache(async (slug: string): Promise<CaseStudyDto | null> => {
-  try {
-    return await serverApi().get<CaseStudyDto>(`/case-studies/${encodeURIComponent(slug)}`, {
-      next: CACHE.caseStudies,
-    });
-  } catch (error) {
-    if (isApiError(error) && error.isNotFound) return null;
-    reportContentFailure(`case study ${slug}`, error);
-    return null;
-  }
+  return safeDetail(
+    () =>
+      serverApi().get<CaseStudyDto>(`/case-studies/${encodeURIComponent(slug)}`, {
+        next: CACHE.caseStudies,
+      }),
+    `case study ${slug}`,
+  );
 });
 
 export const getPortfolioCategories = cache(async (): Promise<PortfolioCategoryDto[]> =>
@@ -288,15 +311,13 @@ export const getProducts = cache(async (): Promise<ProductSummaryDto[]> =>
 );
 
 export const getProduct = cache(async (slug: string): Promise<ProductDto | null> => {
-  try {
-    return await serverApi().get<ProductDto>(`/products/${encodeURIComponent(slug)}`, {
-      next: CACHE.products,
-    });
-  } catch (error) {
-    if (isApiError(error) && error.isNotFound) return null;
-    reportContentFailure(`product ${slug}`, error);
-    return null;
-  }
+  return safeDetail(
+    () =>
+      serverApi().get<ProductDto>(`/products/${encodeURIComponent(slug)}`, {
+        next: CACHE.products,
+      }),
+    `product ${slug}`,
+  );
 });
 
 export const getCommerceStatus = cache(async (): Promise<CommerceStatusDto> => {

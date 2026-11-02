@@ -2,6 +2,8 @@ import { existsSync } from 'node:fs';
 
 import type { NextConfig } from 'next';
 
+import { assertEnv } from './src/lib/env';
+
 /**
  * `@inkvision/shared-types` is the compile-time contract between this app and
  * the API, and it resolves to its compiled `dist/`. Running `next build`
@@ -30,9 +32,29 @@ if (!existsSync(sharedTypesEntry)) {
 }
 
 /**
+ * Fail the build, not the page, on a misconfigured environment.
+ *
+ * Without this the first failure happens inside a page's data fetch, where the
+ * content layer catches it and renders an empty state — so the build succeeds
+ * and the deployed site is blank. The check uses the same schema the
+ * application uses at runtime, so there is no second list of variable names to
+ * keep in step.
+ */
+assertEnv();
+
+/**
  * Security headers applied to every response. `Content-Security-Policy` is set
  * per-request in `src/middleware.ts` because it carries a per-response nonce.
  */
+/**
+ * Fail the build, not the page, on a misconfigured environment.
+ *
+ * This import is why the check can live here: the schema is the same one the
+ * application uses at runtime, so there is no second list of variable names to
+ * keep in step.
+ */
+assertEnv();
+
 const securityHeaders = [
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'X-Frame-Options', value: 'DENY' },

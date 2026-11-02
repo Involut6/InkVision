@@ -651,6 +651,21 @@ NEXT_PUBLIC_COMMERCE_ENABLED  false
 Both API URLs are needed and are not interchangeable: the first is how the
 Next.js server fetches, the second is how the browser does.
 
+`API_BASE_URL`, `NEXT_PUBLIC_API_BASE_URL` and `NEXT_PUBLIC_SITE_URL` have **no
+defaults in production**, by design. They used to fall back to `localhost`,
+which meant a website deployed without them built, served and rendered
+perfectly while showing nothing at all — every list empty, every detail page
+gone, and `http://localhost:3000` in the canonical tags and JSON-LD. The build
+now fails instead, naming the variable. Development keeps the defaults, so
+`pnpm dev` still needs no configuration.
+
+An unreachable API is also no longer reported as a 404. A detail page whose
+content cannot be fetched returns an error, not "page not found" — a 404 tells
+visitors and crawlers the page is gone, which during an outage is false and can
+get the page dropped from the index. List pages still fall back to an empty
+state, and the production build still degrades rather than failing, since
+deploying the website before the API is a normal ordering problem.
+
 ### Email
 
 The default `EMAIL_PROVIDER=console` logs messages instead of sending them, and

@@ -8,11 +8,33 @@ import { z } from 'zod';
  * server-side and browser-side URLs are validated independently and never
  * assumed equal. See README → Deployment.
  */
+/**
+ * In production these must be set explicitly.
+ *
+ * They used to carry `localhost` defaults, which made a deployment with no
+ * environment variables look like it had worked: the site built, served and
+ * rendered, but every page was empty because it was fetching from a localhost
+ * that does not exist on the host — and the canonical URLs and JSON-LD said
+ * `http://localhost:3000`. Failing the build with the name of the missing
+ * variable is far better than shipping that.
+ *
+ * Development keeps the defaults, so `pnpm dev` needs no configuration.
+ */
+const isProduction = process.env.NODE_ENV === 'production';
+
+function url(name: string, developmentDefault: string) {
+  const schema = z.string().url({
+    message: `${name} must be a full URL, e.g. ${developmentDefault}`,
+  });
+
+  return isProduction ? schema.describe(name) : schema.default(developmentDefault).describe(name);
+}
+
 const serverSchema = z.object({
   /** Base URL the Next.js server uses, e.g. `http://api:4000/api/v1`. */
-  API_BASE_URL: z.string().url().default('http://localhost:4000/api/v1'),
-  NEXT_PUBLIC_API_BASE_URL: z.string().url().default('http://localhost:4000/api/v1'),
-  NEXT_PUBLIC_SITE_URL: z.string().url().default('http://localhost:3000'),
+  API_BASE_URL: url('API_BASE_URL', 'http://localhost:4000/api/v1'),
+  NEXT_PUBLIC_API_BASE_URL: url('NEXT_PUBLIC_API_BASE_URL', 'http://localhost:4000/api/v1'),
+  NEXT_PUBLIC_SITE_URL: url('NEXT_PUBLIC_SITE_URL', 'http://localhost:3000'),
   NEXT_PUBLIC_SITE_NAME: z.string().min(1).default('InkVision Creatives'),
   NEXT_PUBLIC_COMMERCE_ENABLED: z
     .enum(['true', 'false', '1', '0', ''])
@@ -21,6 +43,19 @@ const serverSchema = z.object({
 });
 
 export type ServerEnv = z.infer<typeof serverSchema>;
+
+/**
+ * Validates the environment once, up front, and throws if it is wrong.
+ *
+ * `next.config.ts` calls this so a misconfigured production build fails
+ * immediately with one readable message. Without it the first failure happens
+ * inside a page's data fetch, where the content layer catches it and renders
+ * an empty state — so the build succeeds and the deployed site is simply
+ * blank. That is the failure this exists to prevent.
+ */
+export function assertEnv(): void {
+  serverEnv();
+}
 
 let cached: ServerEnv | null = null;
 
@@ -44,7 +79,16 @@ export function serverEnv(): ServerEnv {
     const report = result.error.issues
       .map((issue) => `  • ${issue.path.join('.') || '(root)'}: ${issue.message}`)
       .join('\n');
-    throw new Error(`Invalid website configuration (see .env.example):\n${report}`);
+    throw new Error(
+      [
+        'Invalid website configuration (see .env.example):',
+        report,
+        '',
+        'In production API_BASE_URL, NEXT_PUBLIC_API_BASE_URL and NEXT_PUBLIC_SITE_URL',
+        'have no defaults: a site pointing at localhost builds and serves perfectly',
+        'while showing nothing, which is worse than failing here.',
+      ].join('\n'),
+    );
   }
 
   cached = result.data;
