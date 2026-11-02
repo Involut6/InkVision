@@ -649,8 +649,14 @@ Set before building, since `NEXT_PUBLIC_*` values are inlined at build time:
 
 ### Vercel environment variables
 
-Set these in each project's settings. The website's are read at **build**
-time, so a change needs a redeploy, not just a restart.
+Set these in each project's settings. Two things catch people out:
+
+- **Each variable is scoped to an environment.** A value added while testing a
+  preview URL is Production-scoped only if you tick Production. A variable set
+  for Preview alone is simply absent from the production build, which then
+  fails naming it.
+- **The website's are read at build time**, because `NEXT_PUBLIC_*` values are
+  inlined into the bundle. Changing one needs a redeploy, not a restart.
 
 **API project** (`apps/api`)
 
