@@ -87,7 +87,7 @@ export default async function ServicesPage() {
                 <li key={stage.id} className="border-border-subtle flex gap-5 border-t pt-5">
                   <span
                     aria-hidden="true"
-                    className="tabular text-accent shrink-0 font-serif text-xl"
+                    className="tabular text-accent-text shrink-0 font-serif text-xl"
                   >
                     {String(index + 1).padStart(2, '0')}
                   </span>

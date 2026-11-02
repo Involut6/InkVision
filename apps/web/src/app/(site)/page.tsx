@@ -310,7 +310,7 @@ function ValueProposition({
 }) {
   return (
     <li className="border-border-subtle flex flex-col gap-2 border-t pt-5">
-      <span aria-hidden="true" className="text-accent">
+      <span aria-hidden="true" className="text-accent-text">
         {icon}
       </span>
       <Heading level={3} as="h3" className="text-[1.0625rem]">

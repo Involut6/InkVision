@@ -225,7 +225,7 @@ function StatTile({
   return (
     <div className="bg-surface-raised p-5">
       <div className="text-content-muted flex items-center gap-2">
-        <span aria-hidden="true" className={emphasis ? 'text-accent' : undefined}>
+        <span aria-hidden="true" className={emphasis ? 'text-accent-text' : undefined}>
           {icon}
         </span>
         <span className="text-meta font-semibold tracking-[0.08em] uppercase">{label}</span>

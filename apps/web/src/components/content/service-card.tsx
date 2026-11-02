@@ -17,7 +17,7 @@ function ServiceIcon({ name }: { name: string | null }) {
   const resolved = name ? (icons as unknown as Record<string, unknown>)[name] : undefined;
   const Icon = (typeof resolved === 'function' ? resolved : Fallback) as typeof Fallback;
 
-  return <Icon aria-hidden="true" className="text-accent size-5" />;
+  return <Icon aria-hidden="true" className="text-accent-text size-5" />;
 }
 
 /**

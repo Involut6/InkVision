@@ -329,7 +329,7 @@ read and write paths rather than in the interface:
 | Brute force | Per-IP rate limit on sign-in, plus per-account lockout after 5 failures |
 | Authorisation | Server-side permission checks on every admin route; the UI only hides what a user cannot do |
 | CSRF | Double-submit token bound to the session, on cookie-authenticated writes |
-| XSS | Editor HTML sanitised **on write** against a narrow allowlist; CSP with a per-request nonce |
+| XSS | Editor HTML sanitised **on write** against a narrow allowlist; CSP with a per-request nonce and `strict-dynamic` (see below) |
 | SQL injection | Prisma parameterised queries throughout |
 | Uploads | Declared MIME type must match the file's magic bytes; SVG is never served publicly |
 | Private files | Stored outside any web-served directory; reachable only through signed, authorised routes |
@@ -342,6 +342,38 @@ read and write paths rather than in the interface:
 variable: those are inlined into the browser bundle.
 
 ---
+
+### The CSP nonce and why every page renders per request
+
+`src/proxy.ts` sets a Content-Security-Policy carrying a per-request nonce, and
+`script-src` uses `strict-dynamic` with no `unsafe-inline`. That is the strong
+form of the policy: an injected inline script cannot run, whatever gets past
+the sanitiser.
+
+It also constrains rendering, and the constraint is not optional. The nonce has
+to appear in two places that must agree — the `nonce` attribute Next.js writes
+onto its script tags as it renders the HTML, and the response header. A
+prerendered page bakes in the nonce from build time and is then served from
+cache while the header carries a fresh one. They never match, and because
+`strict-dynamic` makes the browser ignore `'self'`, it refuses every script on
+the page: no mobile navigation, no enquiry form, no newsletter, no accordion,
+no administration portal.
+
+`next dev` renders every request, so the nonces agree there and the site looks
+perfect. This only appears in a production build. It was caught by running the
+end-to-end suite against `node .next/standalone/apps/web/server.js` rather than
+`next dev` — which is how CI runs it, and how it should stay.
+
+So `src/app/layout.tsx` sets `export const dynamic = 'force-dynamic'`. It costs
+less than it sounds: every content fetch is still cached and tagged
+(`lib/api.server.ts`), so the API is not consulted per request — only the HTML
+is assembled per request.
+
+The alternative is to keep prerendered HTML and allow `unsafe-inline` scripts.
+That is what most statically generated Next.js sites do, and it would trade a
+real protection for a saving this site does not need. If the cost of
+per-request rendering ever matters more than the policy, that is the knob —
+change both together, and say so here.
 
 ## Testing
 
@@ -780,14 +812,26 @@ not a code change.
 
 ### Brand assets
 
-1. **Logo.** No logo file was supplied, so the wordmark is typographic
-   (`apps/web/src/components/site/logo.tsx`). Drop in an SVG and replace that one
-   component.
-2. **Exact brand colours.** The royal blue and gold are cohesive provisional
-   values, centralised as CSS variables in `apps/web/src/app/globals.css`.
-   Replace the `--color-royal-*` and `--color-gold-*` ramps with the
-   authoritative values in one edit.
-3. **Photography and imagery.** None supplied. The homepage hero uses an
+1. **Logo — supplied and in use.** `apps/web/public/logo.png`, with
+   `logo-inverse.png` for dark surfaces, rendered by
+   `apps/web/src/components/site/logo.tsx`. Both are flat two-colour art with
+   transparent surrounds, rebuilt from the supplied artwork so they sit on the
+   warm paper surfaces without a white box. A vector original (SVG) would be
+   better still — it would stay sharp at any size and weigh far less — so drop
+   one in and point that component at it if you have one.
+2. **Brand colours — taken from the logo.** Navy `#0b2e74` and yellow
+   `#fccc04`, sampled from the artwork rather than guessed, and anchored in
+   `apps/web/src/app/globals.css` as `--color-royal-700` and
+   `--color-gold-400`. The rest of each ramp holds that hue and varies
+   lightness. The yellow is a graphic colour: at 1.49:1 on paper it may mark,
+   rule and fill, and never carries a word — type that needs to read as gold
+   uses `--color-accent-text` (`#7e6602`), the darkest value that still reads
+   as gold while clearing 4.5:1 on every editorial surface.
+3. **Favicon.** `apps/web/src/app/icon.png` and `apple-icon.png` are the
+   logo's own vee on a navy tile — the one element of the mark that still
+   reads at 32px; the full swoosh goes thin and the nib turns to mush. Replace
+   them if you have a dedicated icon.
+4. **Photography and imagery.** None supplied. The homepage hero uses an
    original typographic composition — an annotated draft — rather than stock
    imagery or an AI-generated corporate visual.
 

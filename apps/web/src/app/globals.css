@@ -17,27 +17,37 @@
    ========================================================================== */
 
 @theme {
-  /* --- Royal blue: the primary brand colour ----------------------------- */
-  --color-royal-50: #eef2fb;
-  --color-royal-100: #d8e1f6;
-  --color-royal-200: #b4c5ec;
-  --color-royal-300: #8aa3df;
-  --color-royal-400: #5f7ccd;
-  --color-royal-500: #3d59b5;
-  --color-royal-600: #2a3f94;
-  --color-royal-700: #1f2f72;
-  --color-royal-800: #18244f;
-  --color-royal-900: #121b3a;
-  --color-royal-950: #0b1026;
+  /* --- Royal blue: the primary brand colour -----------------------------
+     Sampled from the logo: #0b2e74 is the navy of the wordmark, and it sits
+     at 700 so `--color-brand` is the logo colour exactly rather than
+     something near it. The rest of the ramp holds that hue (220°) and varies
+     lightness. */
+  --color-royal-50: #eef2f9;
+  --color-royal-100: #d8e1f3;
+  --color-royal-200: #adc2eb;
+  --color-royal-300: #769be5;
+  --color-royal-400: #366fe3;
+  --color-royal-500: #134ec4;
+  --color-royal-600: #0e3c97;
+  --color-royal-700: #0b2e74;
+  --color-royal-800: #082256;
+  --color-royal-900: #06193f;
+  --color-royal-950: #041028;
 
-  /* --- Gold: accent only ------------------------------------------------ */
-  --color-gold-100: #f8efd8;
-  --color-gold-200: #efdcad;
-  --color-gold-300: #e3c67d;
-  --color-gold-400: #d4ab4c;
-  --color-gold-500: #bd8f2b;
-  --color-gold-600: #9c7320;
-  --color-gold-700: #78571a;
+  /* --- Gold: accent only ------------------------------------------------
+     Also sampled from the logo: #fccc04 is the yellow of the swoosh and the
+     nib, and it sits at 400 because that is where the mark belongs — it is a
+     graphic colour, not a text colour. At 1.49:1 on paper it may mark, rule
+     and fill, and may never carry a word. The darker steps exist for type;
+     700 is the darkest-but-still-gold value that clears 4.5:1 on all three
+     editorial surfaces, including the dimmest. */
+  --color-gold-100: #faf5e0;
+  --color-gold-200: #f4e9b8;
+  --color-gold-300: #ecd883;
+  --color-gold-400: #fccc04;
+  --color-gold-500: #d9af03;
+  --color-gold-600: #ae8d02;
+  --color-gold-700: #7e6602;
 
   /* --- Editorial surfaces ----------------------------------------------- */
   --color-paper: #fdfcf9;
@@ -72,16 +82,16 @@
   --color-brand: var(--color-royal-700);
   --color-brand-strong: var(--color-royal-800);
   --color-brand-soft: var(--color-royal-50);
-  --color-accent: var(--color-gold-500);
+  --color-accent: var(--color-gold-400);
   --color-accent-soft: var(--color-gold-100);
 
   --color-border-subtle: var(--color-ink-200);
   --color-border-strong: var(--color-ink-300);
-  --color-border-accent: var(--color-gold-300);
+  --color-border-accent: var(--color-gold-400);
   /* Gold as a TEXT colour needs to be darker than gold as a rule or a mark.
-     --color-accent (gold-500) is 2.5:1 on paper — fine for a 2px rule, which
-     is decorative, and a WCAG failure for a word. Anything that sets gold on
-     type uses this instead. */
+     --color-accent is the logo's yellow at 1.49:1 on paper — right for a 2px
+     rule, which is decorative, and a WCAG failure for a word. Anything that
+     sets gold on type uses this instead. */
   --color-accent-text: var(--color-gold-700);
 
   --color-success: #1f6f4a;

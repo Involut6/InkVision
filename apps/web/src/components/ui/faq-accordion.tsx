@@ -45,7 +45,7 @@ export function FaqAccordion({
               <Plus
                 aria-hidden="true"
                 className={cn(
-                  'text-accent mt-1 size-4 shrink-0 transition-transform duration-300',
+                  'text-accent-text mt-1 size-4 shrink-0 transition-transform duration-300',
                   'group-data-[state=open]:rotate-45',
                 )}
               />

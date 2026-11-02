@@ -69,7 +69,7 @@ export default async function ContactPage({ searchParams }: PageProps) {
                   <li key={step} className="flex gap-3">
                     <span
                       aria-hidden="true"
-                      className="tabular text-meta text-accent shrink-0 font-sans font-semibold"
+                      className="tabular text-meta text-accent-text shrink-0 font-sans font-semibold"
                     >
                       {String(index + 1).padStart(2, '0')}
                     </span>

@@ -106,7 +106,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
           <div className="[&>*]:ring-border-subtle mt-12 grid gap-px sm:grid-cols-2 [&>*]:ring-1">
             {service.components.map((component, index) => (
               <div key={component.id} className="bg-surface-raised flex flex-col gap-3 p-7 lg:p-8">
-                <span aria-hidden="true" className="tabular text-accent font-serif text-lg">
+                <span aria-hidden="true" className="tabular text-accent-text font-serif text-lg">
                   {String(index + 1).padStart(2, '0')}
                 </span>
                 <Heading level={3} as="h3" className="text-[1.0625rem]">
@@ -133,7 +133,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               <ul className="mt-8 flex flex-col gap-3">
                 {service.deliverables.map((deliverable) => (
                   <li key={deliverable} className="border-border-subtle flex gap-3 border-t pt-3">
-                    <Check aria-hidden="true" className="text-accent mt-0.5 size-4 shrink-0" />
+                    <Check aria-hidden="true" className="text-accent-text mt-0.5 size-4 shrink-0" />
                     <span className="text-content-secondary text-[0.9375rem] leading-relaxed">
                       {deliverable}
                     </span>
@@ -150,7 +150,10 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                 {service.engagementProcess.map((stage, index) => (
                   <li key={stage.id} className="border-border-subtle border-t pt-4">
                     <div className="flex items-baseline gap-3">
-                      <span aria-hidden="true" className="tabular text-accent font-serif text-base">
+                      <span
+                        aria-hidden="true"
+                        className="tabular text-accent-text font-serif text-base"
+                      >
                         {String(index + 1).padStart(2, '0')}
                       </span>
                       <Heading level={3} as="h3" className="text-[1.0625rem]">

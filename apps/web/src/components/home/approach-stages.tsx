@@ -28,7 +28,7 @@ export function ApproachStages({
         >
           <span
             aria-hidden="true"
-            className="tabular text-accent font-serif text-[2rem] leading-none sm:text-[2.5rem]"
+            className="tabular text-accent-text font-serif text-[2rem] leading-none sm:text-[2.5rem]"
           >
             {String(index + 1).padStart(2, '0')}
           </span>

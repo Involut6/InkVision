@@ -1,15 +1,21 @@
+import Image from 'next/image';
 import Link from 'next/link';
+
+import logoInverse from '../../../public/logo-inverse.png';
+import logo from '../../../public/logo.png';
 
 import { cn } from '@/lib/utils';
 
 /**
- * The wordmark.
+ * The supplied logo.
  *
- * No logo file was supplied with the brief, so this is a typographic mark built
- * from the brand's own type pairing: the serif name with a fine gold rule and
- * the studio descriptor set in small caps. It is a single component so a
- * supplied SVG can replace it in one place — see README → "Outstanding
- * business decisions".
+ * Two lockups rather than one: the navy wordmark disappears against the
+ * footer's deep navy, so dark surfaces get a version with the lettering in
+ * paper white. The yellow is identical in both — it is the constant in the
+ * mark, and the thing that has to stay exactly as drawn.
+ *
+ * Both are flat two-colour art with transparent surrounds, so they sit on the
+ * warm paper surfaces without a white box around them.
  */
 export function Logo({
   className,
@@ -20,40 +26,36 @@ export function Logo({
   tone?: 'default' | 'inverse';
   showDescriptor?: boolean;
 }) {
+  const source = tone === 'inverse' ? logoInverse : logo;
+
   return (
     <Link
       href="/"
       aria-label="InkVision Creatives — home"
-      className={cn('group inline-flex flex-col gap-1', className)}
+      className={cn('group inline-flex flex-col gap-1.5', className)}
     >
-      <span
-        className={cn(
-          'font-serif text-[1.3rem] leading-none tracking-[-0.015em] sm:text-[1.45rem]',
-          tone === 'inverse' ? 'text-white' : 'text-content-primary',
-        )}
-      >
-        InkVision
-        {/* `accent-text` rather than `accent`: gold-500 is 2.5:1 on paper,
-            which is fine for a rule and a failure for a word. */}
-        <span className={tone === 'inverse' ? 'text-gold-300' : 'text-accent-text'}>
-          {' '}
-          Creatives
-        </span>
-      </span>
+      <Image
+        src={source}
+        alt="InkVision Creatives"
+        // The header is above the fold on every page, so this is the one image
+        // worth loading eagerly.
+        priority
+        className="h-9 w-auto sm:h-10"
+      />
 
       {showDescriptor ? (
         <span className="flex items-center gap-2">
           <span
             aria-hidden="true"
             className={cn(
-              'block h-0 w-5 border-t transition-[width] duration-300 group-hover:w-8',
-              tone === 'inverse' ? 'border-gold-300' : 'border-accent',
+              'border-accent block h-0 w-5 border-t-2 transition-[width] duration-300',
+              'group-hover:w-8',
             )}
           />
           <span
             className={cn(
               'font-sans text-[0.5625rem] font-semibold tracking-[0.18em] uppercase',
-              tone === 'inverse' ? 'text-white/60' : 'text-content-muted',
+              tone === 'inverse' ? 'text-white/70' : 'text-content-muted',
             )}
           >
             Strategic Communications

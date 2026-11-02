@@ -96,7 +96,10 @@ export default async function ProductPage({ params }: PageProps) {
                 <ul className="mt-4 flex flex-col gap-3">
                   {product.benefits.map((benefit) => (
                     <li key={benefit} className="border-border-subtle flex gap-3 border-t pt-3">
-                      <Check aria-hidden="true" className="text-accent mt-0.5 size-4 shrink-0" />
+                      <Check
+                        aria-hidden="true"
+                        className="text-accent-text mt-0.5 size-4 shrink-0"
+                      />
                       <span className="text-content-secondary text-[0.9375rem] leading-relaxed">
                         {benefit}
                       </span>
@@ -116,7 +119,7 @@ export default async function ProductPage({ params }: PageProps) {
                     <li key={item} className="border-border-subtle flex gap-3 border-t pt-2.5">
                       <span
                         aria-hidden="true"
-                        className="tabular text-meta text-accent shrink-0 font-sans font-semibold"
+                        className="tabular text-meta text-accent-text shrink-0 font-sans font-semibold"
                       >
                         {String(index + 1).padStart(2, '0')}
                       </span>
@@ -209,7 +212,7 @@ export default async function ProductPage({ params }: PageProps) {
         // Said plainly rather than left blank: terms must exist before a sale.
         <Section tone="sunken">
           <div className="border-border-accent flex items-start gap-3 border-l-2 pl-6">
-            <FileText aria-hidden="true" className="text-accent mt-1 size-4 shrink-0" />
+            <FileText aria-hidden="true" className="text-accent-text mt-1 size-4 shrink-0" />
             <p className="max-w-measure-wide text-content-secondary text-sm leading-relaxed">
               Refund terms for this resource have not been published yet. They will appear here, in
               full, before it is offered for sale — we will not take payment for a resource whose

@@ -62,7 +62,7 @@ export function AdminSidebar() {
     <aside className="border-border-subtle bg-surface-raised flex w-full flex-col border-b lg:h-dvh lg:w-64 lg:shrink-0 lg:border-r lg:border-b-0">
       <div className="border-border-subtle border-b px-5 py-5">
         <Link href="/admin" className="text-content-primary font-serif text-lg leading-none">
-          InkVision <span className="text-accent">Admin</span>
+          InkVision <span className="text-accent-text">Admin</span>
         </Link>
         {user ? (
           <p className="text-meta text-content-muted mt-2 truncate" title={user.email}>

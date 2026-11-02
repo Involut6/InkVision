@@ -404,7 +404,7 @@ function Field({
       <label htmlFor={id} className="text-content-primary font-sans text-sm font-semibold">
         {label}
         {required ? (
-          <span aria-hidden="true" className="text-accent ml-1">
+          <span aria-hidden="true" className="text-accent-text ml-1">
             *
           </span>
         ) : (

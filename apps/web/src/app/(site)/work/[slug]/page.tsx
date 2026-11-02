@@ -190,7 +190,7 @@ export default async function CaseStudyPage({ params }: PageProps) {
               <ul className="flex flex-col gap-3">
                 {caseStudy.deliverables.map((deliverable) => (
                   <li key={deliverable} className="border-border-subtle flex gap-3 border-t pt-3">
-                    <Check aria-hidden="true" className="text-accent mt-0.5 size-4 shrink-0" />
+                    <Check aria-hidden="true" className="text-accent-text mt-0.5 size-4 shrink-0" />
                     <span className="text-content-secondary text-[0.9375rem] leading-relaxed">
                       {deliverable}
                     </span>
@@ -239,7 +239,7 @@ export default async function CaseStudyPage({ params }: PageProps) {
             <ul className="flex flex-col gap-4">
               {caseStudy.outcomes.map((outcome) => (
                 <li key={outcome} className="border-border-subtle flex gap-3 border-t pt-4">
-                  <Check aria-hidden="true" className="text-accent mt-1 size-4 shrink-0" />
+                  <Check aria-hidden="true" className="text-accent-text mt-1 size-4 shrink-0" />
                   <span className="text-content-secondary text-[0.9375rem] leading-relaxed">
                     {outcome}
                   </span>

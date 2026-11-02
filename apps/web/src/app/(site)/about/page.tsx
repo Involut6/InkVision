@@ -113,7 +113,7 @@ export default async function AboutPage() {
         <div className="[&>*]:ring-border-subtle mt-12 grid gap-px sm:grid-cols-2 lg:grid-cols-3 [&>*]:ring-1">
           {PRINCIPLES.map((principle, index) => (
             <div key={principle.title} className="bg-surface-raised flex flex-col gap-3 p-7">
-              <span aria-hidden="true" className="tabular text-accent font-serif text-lg">
+              <span aria-hidden="true" className="tabular text-accent-text font-serif text-lg">
                 {String(index + 1).padStart(2, '0')}
               </span>
               <Heading level={3} as="h3" className="text-[1.0625rem]">

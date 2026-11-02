@@ -75,7 +75,9 @@ export function AnnotatedDraft({ className }: { className?: string }) {
 function Annotation({ index, note }: { index: string; note: string }) {
   return (
     <p className="text-content-muted flex gap-3 font-sans text-[0.75rem] leading-relaxed">
-      <span className="tabular text-accent shrink-0 font-semibold tracking-[0.1em]">{index}</span>
+      <span className="tabular text-accent-text shrink-0 font-semibold tracking-[0.1em]">
+        {index}
+      </span>
       <span>{note}</span>
     </p>
   );

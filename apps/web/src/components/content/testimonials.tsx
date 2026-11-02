@@ -28,7 +28,7 @@ export function Testimonials({
     >
       {testimonials.map((testimonial) => (
         <li key={testimonial.id} className="bg-surface-raised flex flex-col gap-5 p-8 lg:p-10">
-          <Quote aria-hidden="true" className="text-accent size-5" />
+          <Quote aria-hidden="true" className="text-accent-text size-5" />
 
           <blockquote className="text-content-primary font-serif text-[1.125rem] leading-relaxed">
             {testimonial.quote}
