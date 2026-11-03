@@ -154,6 +154,24 @@ export class UpdateServiceDto {
   @MaxLength(600)
   ctaBody?: string;
 
+  @ApiPropertyOptional({
+    description:
+      'Wording for this service’s own call to action. An empty string clears it, and the UI falls back to a generic label.',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  ctaLabel?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'An explicit boundary on what the engagement is and is not, shown on the service page. An empty string clears it.',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1200)
+  scopeNote?: string;
+
   @ApiPropertyOptional({ description: 'Lucide icon name used on service cards.' })
   @IsOptional()
   @IsString()

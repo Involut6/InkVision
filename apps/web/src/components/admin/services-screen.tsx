@@ -20,6 +20,8 @@ interface AdminService {
   audience: string;
   ctaHeadline: string;
   ctaBody: string;
+  ctaLabel: string | null;
+  scopeNote: string | null;
   deliverables: string[];
   status: string;
 }
@@ -122,6 +124,8 @@ function ServiceForm({ service, onSaved }: { service: AdminService; onSaved: () 
     audience: service.audience,
     ctaHeadline: service.ctaHeadline,
     ctaBody: service.ctaBody,
+    ctaLabel: service.ctaLabel ?? '',
+    scopeNote: service.scopeNote ?? '',
   });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
@@ -185,8 +189,19 @@ function ServiceForm({ service, onSaved }: { service: AdminService; onSaved: () 
         true,
       )}
       {field('audience', 'Audience', 'Who this is for.', true)}
+      {field(
+        'ctaLabel',
+        'Card call to action',
+        'The wording on this service’s card, e.g. “Discuss a writing project”. Leave empty for the generic label.',
+      )}
       {field('ctaHeadline', 'Closing call to action — headline')}
       {field('ctaBody', 'Closing call to action — body', undefined, true)}
+      {field(
+        'scopeNote',
+        'Scope boundary',
+        'What this engagement is NOT. Required wherever the copy could read as legal, financial, investor-relations or crisis advice. Shown on the service page; leave empty to hide it.',
+        true,
+      )}
 
       <div className="border-border-subtle flex items-center gap-3 border-t pt-4">
         <Button type="submit" disabled={save.isPending}>

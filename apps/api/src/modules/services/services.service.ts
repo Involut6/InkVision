@@ -51,6 +51,9 @@ export class ServicesService {
         title: true,
         tagline: true,
         businessNeed: true,
+        audience: true,
+        deliverables: true,
+        ctaLabel: true,
         position: true,
         icon: true,
       },
@@ -75,9 +78,10 @@ export class ServicesService {
       title: row.title,
       tagline: row.tagline,
       businessNeed: row.businessNeed,
+      audience: row.audience,
+      ctaLabel: row.ctaLabel,
       position: row.position,
       icon: row.icon,
-      audience: row.audience,
       problem: { html: row.problemHtml, text: row.problemText },
       approach: { html: row.approachHtml, text: row.approachText },
       components: row.components.map((component) => ({
@@ -102,6 +106,7 @@ export class ServicesService {
       })),
       ctaHeadline: row.ctaHeadline,
       ctaBody: row.ctaBody,
+      scopeNote: row.scopeNote,
       // Only published, non-future work and articles are surfaced here.
       relatedCaseStudies: row.caseStudies
         .map((link) => link.caseStudy)
@@ -249,6 +254,11 @@ export class ServicesService {
           ...(dto.deliverables !== undefined ? { deliverables: dto.deliverables } : {}),
           ...(dto.ctaHeadline !== undefined ? { ctaHeadline: dto.ctaHeadline } : {}),
           ...(dto.ctaBody !== undefined ? { ctaBody: dto.ctaBody } : {}),
+          // These two are nullable, and the editor sends "" to mean "remove
+          // it". Storing an empty string instead would leave the UI rendering
+          // an empty heading with nothing under it.
+          ...(dto.ctaLabel !== undefined ? { ctaLabel: dto.ctaLabel.trim() || null } : {}),
+          ...(dto.scopeNote !== undefined ? { scopeNote: dto.scopeNote.trim() || null } : {}),
           ...(dto.icon !== undefined ? { icon: dto.icon } : {}),
           ...(dto.seoTitle !== undefined ? { seoTitle: dto.seoTitle } : {}),
           ...(dto.seoDescription !== undefined ? { seoDescription: dto.seoDescription } : {}),

@@ -322,6 +322,14 @@ model Service {
 
   ctaHeadline String
   ctaBody     String
+  /// Wording for this service's own call to action, e.g. "Discuss a writing
+  /// project". Null falls back to a generic label in the UI.
+  ctaLabel    String?
+  /// An explicit boundary on what the engagement is and is not. Required by the
+  /// content rules wherever copy could be read as legal, financial,
+  /// investor-relations or crisis-communications advisory: the studio writes
+  /// these materials, it does not advise on them.
+  scopeNote   String?
   icon        String?
 
   seoTitle       String?

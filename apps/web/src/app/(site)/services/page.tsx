@@ -30,8 +30,8 @@ export default async function ServicesPage() {
     <>
       <PageHeader
         eyebrow="How we can help"
-        title="Four engagements, four different problems."
-        lead="Each of these addresses a distinct business need. If you are unsure which fits your situation, say what you are working towards and we will tell you plainly — including when the answer is a smaller piece of work than you expected."
+        title="Communication that starts with strategy."
+        lead="The strongest public presence is not built by publishing for the sake of consistency. It is built by understanding what you want to be known for, what your audience needs to understand, and which ideas can connect the two. InkVision combines strategy, writing and editorial thinking to help people and organisations communicate with purpose."
         trail={[{ label: 'Services', href: '/services' }]}
         aside={
           <div className="border-border-accent border-l-2 pl-6">
@@ -57,7 +57,7 @@ export default async function ServicesPage() {
         {services.length > 0 ? (
           <CardGrid columns={2}>
             {services.map((service, index) => (
-              <ServiceCard key={service.id} service={service} index={index} />
+              <ServiceCard key={service.id} service={service} index={index} variant="full" />
             ))}
           </CardGrid>
         ) : (
@@ -76,11 +76,21 @@ export default async function ServicesPage() {
       {approachStages.length > 0 ? (
         <Section tone="sunken" labelledBy="services-approach-heading">
           <div className="grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-16">
-            <SectionHeader
-              eyebrow="Common to every engagement"
-              heading={<span id="services-approach-heading">The same five stages</span>}
-              lead="Whichever service you engage us for, the work follows the same sequence. Your expertise and your approval stay central throughout."
-            />
+            {/* Sticky on wide screens: the stage list is much taller than this
+                column, and pinning the heading keeps it in view while the
+                reader works down the five stages instead of leaving a column
+                of empty space beside them. */}
+            <div className="flex flex-col items-start gap-7 lg:sticky lg:top-28 lg:self-start">
+              <SectionHeader
+                eyebrow="Common to every engagement"
+                heading={<span id="services-approach-heading">The same five stages</span>}
+                lead="Whichever service you engage us for, the work follows the same sequence. Your expertise and your approval stay central throughout."
+              />
+
+              <Button asChild variant="outline">
+                <Link href="/approach">Read the full approach</Link>
+              </Button>
+            </div>
 
             <ol className="flex flex-col gap-6">
               {approachStages.map((stage, index) => (
@@ -102,12 +112,6 @@ export default async function ServicesPage() {
                 </li>
               ))}
             </ol>
-          </div>
-
-          <div className="mt-10">
-            <Button asChild variant="outline">
-              <Link href="/approach">Read the full approach</Link>
-            </Button>
           </div>
         </Section>
       ) : null}
@@ -143,6 +147,21 @@ export default async function ServicesPage() {
               <p className="text-content-secondary mt-3 text-sm leading-relaxed">{item.body}</p>
             </div>
           ))}
+        </div>
+
+        {/* The boundary of the offer, stated on the overview rather than left
+            to be discovered on one service page. Writing a shareholder letter
+            is not the same as advising on one, and a prospective client should
+            not have to infer the difference. */}
+        <div className="border-border-accent mt-10 border-l-2 py-1 pl-6">
+          <Body className="text-sm">
+            A note on scope: InkVision is a writing and communications studio. We shape and write
+            the material; we do not provide legal, financial, investor-relations or
+            crisis-management advice, and nothing we produce replaces advice from qualified
+            professionals. Where material is regulated or specialist, your own advisers review and
+            approve it before it is issued, and we agree who holds that responsibility before the
+            work begins.
+          </Body>
         </div>
       </Section>
 

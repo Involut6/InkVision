@@ -22,6 +22,14 @@ export interface ServiceSeed {
   faqs: { question: string; answer: string }[];
   ctaHeadline: string;
   ctaBody: string;
+  /** This service's own CTA wording, taken from the brief. */
+  ctaLabel: string;
+  /**
+   * An explicit boundary on what the engagement is and is not. Set wherever the
+   * copy could otherwise read as regulated advisory work — the content rules
+   * require it, and it is also simply true.
+   */
+  scopeNote?: string;
   seoTitle: string;
   seoDescription: string;
 }
@@ -130,6 +138,7 @@ export const SERVICE_SEEDS: ServiceSeed[] = [
     ctaHeadline: 'What do you want to be known for?',
     ctaBody:
       'Tell us where you are now and what you are working towards. We will tell you honestly whether executive visibility work is the right next step.',
+    ctaLabel: 'Discuss executive visibility',
     seoTitle: 'Executive Visibility | InkVision Creatives',
     seoDescription:
       'Positioning, profiles and professional presence for senior people whose expertise deserves to be understood outside their own organisation.',
@@ -245,6 +254,9 @@ export const SERVICE_SEEDS: ServiceSeed[] = [
     ctaHeadline: 'What argument have you been meaning to make?',
     ctaBody:
       'If there is something you keep saying in meetings that belongs in public, that is usually where we start.',
+    ctaLabel: 'Discuss a writing project',
+    scopeNote:
+      'We develop and write the client’s own ideas. We do not invent expertise or opinions on a client’s behalf, and we do not publish anything the client has not reviewed and approved.',
     seoTitle: 'Thought Leadership & Ghostwriting | InkVision Creatives',
     seoDescription:
       'Interview-led ghostwriting and editorial strategy for executives with a genuine point of view and no time to write it.',
@@ -355,6 +367,7 @@ export const SERVICE_SEEDS: ServiceSeed[] = [
     ctaHeadline: 'What is your content supposed to achieve?',
     ctaBody:
       'If that question is harder to answer than it should be, a content audit is usually the cheapest place to start.',
+    ctaLabel: 'Discuss business communications',
     seoTitle: 'Strategic Content & Communications | InkVision Creatives',
     seoDescription:
       'Content audits, message architecture and editorial systems for organisations whose communications have outgrown their strategy.',
@@ -460,6 +473,9 @@ export const SERVICE_SEEDS: ServiceSeed[] = [
     ctaHeadline: 'What do you need to say?',
     ctaBody:
       'If something consequential is coming and you want it handled properly, tell us the situation and the timeline.',
+    ctaLabel: 'Tell us what you need',
+    scopeNote:
+      'This is communications work, not advisory. We write and shape these materials; we are not legal, financial, investor-relations or crisis-management advisers, and nothing we produce is a substitute for advice from people who are. Where material is regulated or specialist — investor and shareholder communications above all — your own qualified advisers review and approve it before it is issued, and we agree who holds that responsibility at the outset.',
     seoTitle: 'Executive Communications | InkVision Creatives',
     seoDescription:
       'Keynotes, board papers and high-stakes announcements prepared with the judgement these moments require.',

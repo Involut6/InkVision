@@ -172,6 +172,22 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             </div>
           ) : null}
         </div>
+
+        {/* The boundary of this particular engagement, where one is set.
+            Rendered next to the deliverables on purpose: the moment a reader
+            is deciding what they are buying is the moment to be clear about
+            what it is not. */}
+        {service.scopeNote ? (
+          <aside
+            aria-labelledby="scope-note-heading"
+            className="border-border-accent bg-surface-raised mt-12 border-l-2 p-7 lg:p-8"
+          >
+            <Heading level={3} as="h2" id="scope-note-heading" className="text-[1.0625rem]">
+              What this engagement is, and is not
+            </Heading>
+            <Body className="mt-3 text-sm">{service.scopeNote}</Body>
+          </aside>
+        ) : null}
       </Section>
 
       {/* --- Related published samples --------------------------------------

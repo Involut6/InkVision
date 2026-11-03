@@ -51,12 +51,24 @@ export interface ServiceSummaryDto {
   readonly tagline: string;
   /** The business need this service addresses, in plain language. */
   readonly businessNeed: string;
+  /** Who the engagement is for. Cards show this so a visitor can self-select. */
+  readonly audience: string;
+  /**
+   * Named deliverables, in a meaningful order. Carried on the summary so the
+   * overview page can say what an engagement includes without a second request
+   * per service.
+   */
+  readonly deliverables: readonly string[];
+  /**
+   * This service's own call-to-action wording. Null means no specific label was
+   * set and the UI falls back to a generic one.
+   */
+  readonly ctaLabel: string | null;
   readonly position: number;
   readonly icon: string | null;
 }
 
 export interface ServiceDto extends ServiceSummaryDto, SeoFields {
-  readonly audience: string;
   readonly problem: RichText;
   readonly approach: RichText;
   readonly components: readonly ServiceComponentDto[];
@@ -65,6 +77,12 @@ export interface ServiceDto extends ServiceSummaryDto, SeoFields {
   readonly faqs: readonly FaqItemDto[];
   readonly ctaHeadline: string;
   readonly ctaBody: string;
+  /**
+   * An explicit boundary on what this engagement is and is not — set wherever
+   * the copy could otherwise be read as regulated advisory work. Null where no
+   * such boundary is needed.
+   */
+  readonly scopeNote: string | null;
   readonly relatedCaseStudies: readonly CaseStudySummaryDto[];
   readonly relatedArticles: readonly ArticleSummaryDto[];
   readonly updatedAt: string;
