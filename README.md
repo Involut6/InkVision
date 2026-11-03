@@ -819,12 +819,14 @@ not a code change.
 ### Brand assets
 
 1. **Logo — supplied and in use.** `apps/web/public/logo.png`, with
-   `logo-inverse.png` for dark surfaces, rendered by
-   `apps/web/src/components/site/logo.tsx`. Both are flat two-colour art with
-   transparent surrounds, rebuilt from the supplied artwork so they sit on the
-   warm paper surfaces without a white box. A vector original (SVG) would be
-   better still — it would stay sharp at any size and weigh far less — so drop
-   one in and point that component at it if you have one.
+   `logo-inverse.png` for the dark footer, rendered by
+   `apps/web/src/components/site/logo.tsx`. These are the supplied pixels,
+   cropped to the artwork's own edges with the white it came on keyed out, so
+   it sits on the warm paper surfaces without a box. Nothing is redrawn and
+   nothing is set beside it; the footer version changes only the lettering,
+   lifting it to paper white so it can be read on navy. A vector original
+   (SVG) would be better still — sharp at any size, a fraction of the weight —
+   so drop one in and point that component at it if you have one.
 2. **Brand colours — taken from the logo.** Navy `#0b2e74` and yellow
    `#fccc04`, sampled from the artwork rather than guessed, and anchored in
    `apps/web/src/app/globals.css` as `--color-royal-700` and

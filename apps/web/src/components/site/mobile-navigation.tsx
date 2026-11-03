@@ -53,7 +53,7 @@ export function MobileNavigation() {
           </Dialog.Description>
 
           <div className="border-border-subtle flex items-center justify-between border-b px-5 py-4">
-            <Logo showDescriptor={false} />
+            <Logo />
             <Dialog.Close asChild>
               <Button variant="ghost" size="icon" aria-label="Close the main menu">
                 <X aria-hidden="true" />
