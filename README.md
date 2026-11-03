@@ -170,7 +170,6 @@ The seed is idempotent. What it deliberately does **not** create, and why:
 | --- | --- |
 | An administrator account | No usable credential should ever live in source control — see the next step |
 | Case studies | No completed, client-approved work was supplied, and inventing a portfolio is exactly what the content rules forbid |
-| Testimonials | None have been confirmed as authorised for publication |
 | Product price, file, refund terms | Not supplied, so the resource is correctly reported as not purchasable |
 | Published articles | The seeded drafts are commissioning briefs, not finished pieces |
 
@@ -850,17 +849,26 @@ not a code change.
    real person is not acceptable. `/about` describes how the studio works and
    invites the conversation instead. Add an `Author` record and update the
    leadership section once a biography is approved.
-5. **Testimonials.** The sample quotes in the strategy document have **not** been
-   seeded. The schema requires an explicit `isApproved` flag plus publication,
-   and the homepage section renders nothing until both are set. Confirm which
-   quotes are authorised, from whom, and in what wording.
+5. **Testimonials.** The four quotes supplied in the business's own Website
+   Strategy & Content Brief are seeded verbatim, approved and published, with
+   `sourceNote` recording where each came from. Attribution is by role and
+   sector — "Chief Financial Officer, Financial Services Company" — exactly as
+   supplied. **Do not name the individuals or their employers** without written
+   permission from each: the quote carries no disclosure consent on its own. The
+   schema's `isApproved` flag remains separate from publication status, so any
+   further quote needs both set before it is served.
 6. **Case studies.** None seeded, because none were supplied as completed and
    client-approved. The public page shows a considered empty state. Add real
    work through the portfolio CMS; commissioned work needs recorded client
    approval before it can be published.
-7. **Articles.** Seven commissioning briefs are seeded as **drafts**, carrying the
-   argument each piece should make. They are not finished articles and the public
-   site does not present them as such.
+7. **Articles.** Fifteen commissioning briefs are seeded as **drafts** — one for
+   each article idea in the strategy brief, plus the themes that emerged from
+   it — carrying the argument each piece should make. They are **not** finished
+   articles, and the public site does not present them as such: `/insights`
+   shows the editorial themes and an honest "in preparation" state until real
+   pieces are written and published. Writing them is a commissioning decision,
+   not a build task — inventing a founder's opinions is precisely what the
+   brief's own principle forbids.
 
 ### Commercial
 

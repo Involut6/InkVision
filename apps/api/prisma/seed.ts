@@ -10,7 +10,9 @@
  *     is created with `pnpm admin:create`, which generates a credential the
  *     operator sets themselves. Nothing in source control is ever a usable
  *     credential.
- *   * It invents no client names, testimonials, logos, statistics or outcomes.
+ *   * It invents no client names, logos, statistics or outcomes. The testimonials
+ *     it does seed are reproduced verbatim from the business's own brief, which
+ *     is the record of authorisation; nothing is reworded or strengthened.
  *   * It publishes nothing that is not genuinely ready: articles are DRAFT, the
  *     product is COMING_SOON with no price, and the legal pages are flagged as
  *     awaiting review.
@@ -33,7 +35,20 @@ import {
   FAQ_GROUPS,
   LEGAL_PAGES,
   PRODUCT_SEED,
+  TESTIMONIAL_SEEDS,
 } from './seed-data/content.js';
+
+/**
+ * Prisma 7 no longer reads `.env` on its own, and `tsx` does not either, so the
+ * documented flow — copy `.env.example` to `.env`, then `pnpm db:seed` — needs
+ * this. Variables already in the environment win, which is how CI overrides it.
+ * Mirrors `prisma.config.ts`, which does the same for the migrate CLI.
+ */
+try {
+  process.loadEnvFile(new URL('../.env', import.meta.url));
+} catch {
+  // No .env file; the variables are expected to come from the environment.
+}
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -319,6 +334,50 @@ async function seedPortfolioCategories(): Promise<void> {
   console.log(`  ✓ ${categories.length} portfolio categories (no case studies — none supplied)`);
 }
 
+async function seedTestimonials(): Promise<void> {
+  /**
+   * Supplied by the business in its Website Strategy & Content Brief, which is
+   * both the source and the record that publication was authorised. Each quote
+   * is stored exactly as written — the seed strengthens no claim and names no
+   * individual or employer beyond the role and sector the business gave.
+   *
+   * `isApproved` is still an explicit, separate flag from `status`: the API
+   * requires both, so a later status change alone can never put an
+   * unauthorised quote on the website.
+   *
+   * Idempotent by quote text rather than by a surrogate key, since the table
+   * has no natural unique column and re-running must not duplicate rows.
+   */
+  const approvedAt = new Date();
+
+  for (const seed of TESTIMONIAL_SEEDS) {
+    const existing = await prisma.testimonial.findFirst({ where: { quote: seed.quote } });
+
+    const data = {
+      quote: seed.quote,
+      attributionName: seed.attributionName,
+      attributionRole: null,
+      attributionOrganisation: seed.attributionOrganisation,
+      isApproved: true,
+      approvedAt,
+      approvedBy: 'InkVision Creatives — Website Strategy & Content Brief',
+      sourceNote:
+        'Reproduced verbatim from the business’s Website Strategy & Content Brief. Attribution is by role and sector, as supplied; no individual or employer is named.',
+      status: 'PUBLISHED' as const,
+      publishedAt: approvedAt,
+      position: seed.position,
+    };
+
+    if (existing) {
+      await prisma.testimonial.update({ where: { id: existing.id }, data });
+    } else {
+      await prisma.testimonial.create({ data });
+    }
+  }
+
+  console.log(`  ✓ ${TESTIMONIAL_SEEDS.length} testimonials (supplied by the business, verbatim)`);
+}
+
 async function seedFaqs(): Promise<void> {
   for (const group of FAQ_GROUPS) {
     const record = await prisma.faqGroup.upsert({
@@ -424,6 +483,7 @@ async function main(): Promise<void> {
   await seedApproach();
   await seedAuthorAndArticles();
   await seedPortfolioCategories();
+  await seedTestimonials();
   await seedFaqs();
   await seedProduct();
   await seedLegalPages();
@@ -435,7 +495,6 @@ async function main(): Promise<void> {
     '  • Administrator account — run `pnpm admin:create` so the password is never in source.',
   );
   console.log('  • Case studies — no completed, client-approved work was supplied.');
-  console.log('  • Testimonials — none have been confirmed as authorised for publication.');
   console.log(
     '  • Product price, file and refund terms — not supplied, so the resource is not purchasable.',
   );

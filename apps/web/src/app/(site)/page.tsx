@@ -279,12 +279,16 @@ export default async function HomePage() {
 
       {/* --- Testimonials ---------------------------------------------------
           Renders only when the business has approved specific quotes for
-          publication. Nothing is shown otherwise. */}
+          publication. Nothing is shown otherwise — an empty quote grid would be
+          worse than no section at all. */}
       {testimonials.length > 0 ? (
         <Section tone="sunken" labelledBy="testimonials-heading">
           <SectionHeader
             eyebrow="In their words"
-            heading={<span id="testimonials-heading">What clients say</span>}
+            heading={
+              <span id="testimonials-heading">Trusted by leaders who have something to say</span>
+            }
+            lead="Helping executives and business leaders communicate their expertise, strengthen their professional presence and share ideas that matter."
           />
           <Testimonials testimonials={testimonials} className="mt-12" />
         </Section>

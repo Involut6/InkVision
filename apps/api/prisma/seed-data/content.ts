@@ -234,6 +234,110 @@ export const ARTICLE_DRAFTS: ArticleSeed[] = [
 <h2>Still to be developed</h2>
 <ul><li>The reader's actual question, and how rarely profiles answer it.</li><li>Expertise as a claim that needs evidence.</li><li>What to leave out, and why that is the hardest part.</li></ul>`,
   },
+  {
+    slug: 'can-the-right-people-see-your-expertise',
+    title: 'Your expertise is valuable. Can the right people see it?',
+    summary:
+      'Expertise that stays inside the room where it was earned cannot do any of the work you need it to do. On the distance between knowing something and being known for it.',
+    categorySlug: 'executive-visibility',
+    tags: ['visibility', 'positioning'],
+    bodyHtml: `<p><em>Editorial brief — draft. The argument this piece should make:</em></p>
+<p>Most senior people are not invisible by choice. Their expertise is demonstrated constantly — in meetings, in client work, in decisions nobody outside the organisation ever sees. The piece should start from that observation rather than from a deficit.</p>
+<p>It should then make the uncomfortable point: the people deciding whether to hire you, promote you, invite you or buy from you are working from a far smaller sample than the people who work with you. Reputation forms from what is legible, not from what is true.</p>
+<h2>Still to be developed</h2>
+<ul><li>Who specifically needs to understand your expertise, and what they currently see instead.</li><li>Why the gap is rarely closed by working harder at the work itself.</li><li>The smallest change that makes expertise legible to a stranger.</li></ul>`,
+  },
+  {
+    slug: 'documenting-achievements-before-review-season',
+    title: 'How senior professionals can document achievements before review season',
+    summary:
+      'By the time the conversation happens, the detail has gone. A practical case for recording the work while you still remember what it took.',
+    categorySlug: 'professional-brand',
+    tags: ['professional brand', 'career'],
+    bodyHtml: `<p><em>Editorial brief — draft. The argument this piece should make:</em></p>
+<p>Performance conversations reward recall, and recall decays. The piece should show how much is lost in a year: the constraint that made a project difficult, the judgement call that saved it, the number that is obvious at the time and unrecoverable six months later.</p>
+<p>The remedy is unglamorous and should be presented as such — a short, regular record kept while the work is fresh. The piece should argue that this is not self-promotion but accurate memory, and that the same record later supports a profile, a bio, a board application or a case study.</p>
+<h2>Still to be developed</h2>
+<ul><li>What to capture: the problem, the constraint, the decision, the evidence.</li><li>Why a running record beats a reconstruction, with a worked example.</li><li>How the same material gets reused well beyond the review itself.</li></ul>`,
+  },
+  {
+    slug: 'finding-a-point-of-view-for-linkedin',
+    title: 'How to find a useful point of view for your LinkedIn content',
+    summary:
+      'A point of view is not a personality. It is a position you hold about something that is genuinely unsettled in your field.',
+    categorySlug: 'thought-leadership',
+    tags: ['thought leadership', 'linkedin'],
+    bodyHtml: `<p><em>Editorial brief — draft. The argument this piece should make:</em></p>
+<p>Advice on professional posting tends to arrive as format: hooks, lists, cadence. The piece should argue that format is downstream of a prior question — what do you think that a competent peer might not?</p>
+<p>It should offer a method rather than an exhortation: look at what you argue in private, what you have changed your mind about, where you routinely correct a client, and what your field repeats without evidence. Those are where a defensible position is already sitting.</p>
+<h2>Still to be developed</h2>
+<ul><li>Four places a genuine position is usually already hiding.</li><li>The test: could a well-informed peer disagree?</li><li>Why a narrower position travels further than a general one.</li></ul>`,
+  },
+  {
+    slug: 'what-a-founders-brand-communicates',
+    title: 'What a founder’s personal brand should communicate about the business',
+    summary:
+      'A founder’s public presence is read as evidence about the company. On deciding what that evidence should say.',
+    categorySlug: 'professional-brand',
+    tags: ['founders', 'positioning'],
+    bodyHtml: `<p><em>Editorial brief — draft. The argument this piece should make:</em></p>
+<p>In early and mid-stage businesses the founder is the most legible thing about the company. Prospects, candidates, partners and investors form a view of the business from the founder's posts long before they read the website.</p>
+<p>The piece should argue that this makes a founder's presence a strategic asset with a job to do — demonstrate judgement, show the problem is genuinely understood, make the company's point of view visible — and that treating it as personal expression wastes it. It should also mark the limits: what belongs to the founder, and what belongs to the company.</p>
+<h2>Still to be developed</h2>
+<ul><li>The three things a reader infers about a company from its founder.</li><li>Where the founder's voice and the company's voice should diverge.</li><li>What to do when the founder's profile outgrows the business, or lags it.</li></ul>`,
+  },
+  {
+    slug: 'one-executive-interview-many-pieces',
+    title: 'How to turn one executive interview into a useful content series',
+    summary:
+      'A single recorded conversation holds more argument than most publishing plans. On working it properly rather than slicing it thinly.',
+    categorySlug: 'behind-the-work',
+    tags: ['method', 'editorial planning'],
+    bodyHtml: `<p><em>Editorial brief — draft. The argument this piece should make:</em></p>
+<p>The familiar version of this idea is repurposing: cut a long piece into fragments and schedule them. The piece should reject that framing. One hour of genuine conversation with someone who knows their subject typically contains three or four separate arguments, each with its own evidence and its own audience.</p>
+<p>It should describe the actual process: interview for argument rather than quotes, identify where the thinking is load-bearing, then develop each strand into a piece that stands alone. And it should be honest about what this requires — editorial judgement, not a template.</p>
+<h2>Still to be developed</h2>
+<ul><li>How to interview for argument rather than for soundbites.</li><li>Separating one conversation into distinct, self-supporting pieces.</li><li>Why fragmenting a single argument produces weaker work, not more of it.</li></ul>`,
+  },
+  {
+    slug: 'personal-brand-versus-professional-reputation',
+    title: 'The difference between a personal brand and a professional reputation',
+    summary:
+      'One is what you publish. The other is what people say when you are not in the room. They are related, and they are not the same.',
+    categorySlug: 'professional-brand',
+    tags: ['professional brand', 'reputation'],
+    bodyHtml: `<p><em>Editorial brief — draft. The argument this piece should make:</em></p>
+<p>A personal brand is a claim you make. A professional reputation is a conclusion other people reach. The piece should hold the two apart clearly, because conflating them is what produces presence that feels inflated to anyone who has actually worked with the person.</p>
+<p>It should argue that the useful relationship between them runs in one direction: a reputation earned through work is what a personal brand can legitimately make visible. Presence built ahead of substance is detected quickly, and by exactly the audience that matters most.</p>
+<h2>Still to be developed</h2>
+<ul><li>What each one is actually made of.</li><li>Why the gap between them is the thing readers notice.</li><li>How to make an existing reputation more legible without overstating it.</li></ul>`,
+  },
+  {
+    slug: 'making-complex-expertise-easier-to-understand',
+    title: 'How professional-services firms can make complex expertise easier to understand',
+    summary:
+      'Firms that do genuinely difficult work often describe it in language only their peers can parse. On the cost of that, and the fix.',
+    categorySlug: 'business-communication',
+    tags: ['professional services', 'messaging'],
+    bodyHtml: `<p><em>Editorial brief — draft. The argument this piece should make:</em></p>
+<p>Professional-services firms tend to communicate in the register of their own expertise, which reassures peers and loses buyers. The piece should separate the two audiences and show that writing for the buyer is not simplification — it is a different argument.</p>
+<p>It should treat the problem as structural rather than stylistic: the firm has not decided what the client needs to understand, believe or do, so the copy describes capability instead. The remedy is a message architecture, and the piece should show what one actually settles.</p>
+<h2>Still to be developed</h2>
+<ul><li>Why expert-to-expert language reads as evasion to a buyer.</li><li>Clarity as a question of structure, not vocabulary.</li><li>What a message architecture resolves that a style guide cannot.</li></ul>`,
+  },
+  {
+    slug: 'what-belongs-in-an-executive-voice-guide',
+    title: 'What to include in an executive voice and messaging guide',
+    summary:
+      'Not adjectives. A working document that lets someone else write as you, and lets you tell quickly whether they have.',
+    categorySlug: 'content-strategy',
+    tags: ['voice', 'messaging'],
+    bodyHtml: `<p><em>Editorial brief — draft. The argument this piece should make:</em></p>
+<p>Most voice guides describe a tone — confident, approachable, authoritative — and are useless at the moment of writing, because every writer already believes they are doing that. The piece should propose a document built from evidence instead.</p>
+<p>It should set out what actually belongs in one: recorded phrasing the executive genuinely uses, the positions they hold and the ones they decline to take, the vocabulary they avoid, the structures they favour, worked before-and-after examples, and the approval path. It should be presented as a working tool that is revised as the executive's thinking moves.</p>
+<h2>Still to be developed</h2>
+<ul><li>Why recorded speech is the only reliable source for voice.</li><li>The sections that earn their place, and the ones that never get used.</li><li>Keeping the guide current as positions change.</li></ul>`,
+  },
 ];
 
 export interface FaqGroupSeed {
@@ -469,3 +573,56 @@ export const PRODUCT_SEED = {
   seoDescription:
     'A structured workbook for corporate professionals deciding what they want to be known for. In preparation.',
 } as const;
+
+/* ---------------------------------------------------------------------------
+ * Testimonials
+ *
+ * Supplied by the business in the Website Strategy & Content Brief, which is
+ * the client's own document and the record of authorisation. The quotes are
+ * reproduced verbatim: no wording is tightened, no claim is strengthened and
+ * no attribution is made more specific than the business supplied it.
+ *
+ * Attribution carries a role and a sector descriptor rather than a named
+ * individual, exactly as the brief has it. Naming the people, or their
+ * employers, would assert a disclosure permission nobody has given.
+ * ------------------------------------------------------------------------ */
+export interface TestimonialSeed {
+  /** Reproduced exactly as supplied. */
+  quote: string;
+  /** The role, which is what the brief leads with in place of a name. */
+  attributionName: string;
+  /** The sector descriptor, as supplied. */
+  attributionOrganisation: string;
+  position: number;
+}
+
+export const TESTIMONIAL_SEEDS: TestimonialSeed[] = [
+  {
+    quote:
+      'InkVision understands how to translate complex business ideas into communication that is clear, engaging and relevant to the audience. Their approach goes beyond writing to focus on the message and the value it needs to communicate.',
+    attributionName: 'Chief Financial Officer',
+    attributionOrganisation: 'Financial Services Company',
+    position: 1,
+  },
+  {
+    quote:
+      'What stands out about InkVision is the ability to understand a business, identify the right message and communicate it in a way that resonates with the intended audience. That strategic thinking makes a difference.',
+    attributionName: 'Director, Corporate Affairs',
+    attributionOrganisation: 'FMCG Company',
+    position: 2,
+  },
+  {
+    quote:
+      'Good thought leadership requires more than posting regularly. It requires a clear point of view and a genuine understanding of the subject. InkVision recognises this and approaches content with the depth and intentionality it deserves.',
+    attributionName: 'Chief Executive Officer',
+    attributionOrganisation: 'Fintech Company',
+    position: 3,
+  },
+  {
+    quote:
+      'InkVision brings together research, storytelling and strategic communication in a way that helps professionals and organisations articulate their value. I appreciate the emphasis on substance, not just visibility.',
+    attributionName: 'Managing Director',
+    attributionOrganisation: 'Consulting and Advisory Firm',
+    position: 4,
+  },
+];

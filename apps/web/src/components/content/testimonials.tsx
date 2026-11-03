@@ -7,11 +7,15 @@ import { cn } from '@/lib/utils';
 /**
  * Approved testimonials.
  *
- * Renders nothing at all when the list is empty, which is the current state:
- * the API only returns quotes the business has confirmed are authorised for
- * publication, and an empty placeholder would be worse than no section. The
- * sample quotes in the strategy document are deliberately not seeded — see
- * README → "Outstanding business decisions".
+ * Renders nothing at all when the list is empty. The API returns only quotes
+ * carrying both an explicit approval flag and a published status, so an
+ * unauthorised quote cannot reach the page on a status change alone, and an
+ * empty placeholder would be worse than no section.
+ *
+ * Attribution is by role and sector rather than by name, which is how the
+ * business supplied these. Resist the temptation to make it more specific:
+ * naming a person or their employer asserts a disclosure permission that the
+ * quote itself does not carry.
  */
 export function Testimonials({
   testimonials,
